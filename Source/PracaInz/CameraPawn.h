@@ -29,4 +29,5 @@ public:
 	UPROPERTY(EditAnywhere)		class USpringArmComponent* CameraArm;	UPROPERTY(EditAnywhere)		class UCameraComponent* Camera;	UPROPERTY(EditAnywhere, Category = "Components")
 		class USceneComponent* Focused;	bool bOnChangePlanet = false;	void ZoomIn();	void ZoomOut();	void RotateX(float Value);	void RotateY(float Value);
 
+
 };

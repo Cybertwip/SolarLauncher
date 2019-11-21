@@ -20,8 +20,8 @@ ACameraPawn::ACameraPawn()
 	CameraArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));	Focused = CreateDefaultSubobject<USceneComponent>("RootComponent");	RootComponent = Focused;	RootComponent->SetAbsolute(true, true, true);	CameraArm->SetupAttachment(RootComponent);	CameraArm->TargetArmLength = 600.0f;	CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));	CameraArm->bDoCollisionTest = false;	CameraArm->AttachTo(RootComponent);
 	Camera->SetupAttachment(CameraArm);
-	Camera->AttachTo(CameraArm, USpringArmComponent::SocketName); 	CameraArm->bAbsoluteRotation = true;
-
+	Camera->AttachTo(CameraArm, USpringArmComponent::SocketName); 	CameraArm->bAbsoluteRotation = true;
+   	
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
@@ -46,10 +46,10 @@ void ACameraPawn::Tick(float DeltaTime)
 	if (bOnChangePlanet)
 	{
 		RootComponent = Focused;		CameraArm->SetWorldRotation(CameraArm->GetComponentRotation());		CameraArm->AttachTo(RootComponent);
-		RootComponent->SetAbsolute(true, true, true);
 		//CameraArm->TargetArmLength = 600.0f;
 		bOnChangePlanet = false;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
 	
 }
 
@@ -85,6 +85,7 @@ void ACameraPawn::RotateY(float Value)
 	NewPitch.Pitch = FMath::Clamp(NewPitch.Pitch + Value, -89.0f, 89.0f);
 	CameraArm->SetWorldRotation(NewPitch);
 }
+
 
 //yaw 
 void ACameraPawn::RotateX(float Value)

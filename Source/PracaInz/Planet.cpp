@@ -74,9 +74,9 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			if (Planet->PlanetMass >= PlanetMass)
 			{
+				PracaInzGameState->CurrentPlanet = nullptr;
 				PracaInzGameState->Planets.Remove(this);
 				this->Destroy();
-				UE_LOG(LogTemp, Warning, TEXT("Destroyed"));
 			}
 			else
 			{
@@ -116,13 +116,13 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
 		UE_LOG(LogTemp, Warning, TEXT("Velocity: %s!"), *Velocity.ToString());
 		UE_LOG(LogTemp, Warning, TEXT("Force: %s!"), *F.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *PlanetMesh->GetComponentRotation().ToString());
 		UE_LOG(LogTemp, Warning, TEXT("DeltaTime: %s!"), *FString::SanitizeFloat(DeltaTime));
 		*/
 		FRotator NewRotation =GetActorRotation();
 		float DeltaRotation = DeltaTime * RotationSpeed;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
-		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *PlanetMesh->GetComponentRotation().ToString());
 		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
 	}
 }
