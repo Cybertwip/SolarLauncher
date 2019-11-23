@@ -37,11 +37,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 		FString Name;
 
+	bool bIsBeingDestroyed = false;
+	FTimerHandle DestroyTimer;
+
 	UFUNCTION()
 		void OnSelected(AActor* Target, FKey ButtonPressed);
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+
 	void UpdatePlanetPosition(float DeltaTime);
+	void DestroyPlanet();
 };

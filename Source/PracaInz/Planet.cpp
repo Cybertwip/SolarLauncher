@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "DrawDebugHelpers.h"
 #include "PracaInzHUD.h"
+#include "TimerManager.h"
 #include "Camera\CameraComponent.h"
 #include "Classes/Components/StaticMeshComponent.h"
 
@@ -44,7 +45,11 @@ void APlanet::BeginPlay()
 void APlanet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UpdatePlanetPosition(DeltaTime);	
+	if (bIsBeingDestroyed)
+	{
+		DestroyPlanet();
+	}
+	UpdatePlanetPosition(DeltaTime);
 }
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
@@ -67,7 +72,6 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlap!"));
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		if (APlanet* Planet = Cast<APlanet>(OtherActor))
@@ -76,7 +80,14 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			{
 				PracaInzGameState->CurrentPlanet = nullptr;
 				PracaInzGameState->Planets.Remove(this);
-				this->Destroy();
+				PracaInzGameState->Camera->Focused = Cast<USceneComponent>(Planet->PlanetMesh);
+				PracaInzGameState->CurrentPlanet = Planet;
+				if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+				{
+					PracaInzHUD->UpdatePlanetInfo(Planet);
+				}
+				PracaInzGameState->Camera->bOnChangePlanet = true;
+				bIsBeingDestroyed = true;
 			}
 			else
 			{
@@ -119,12 +130,17 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *PlanetMesh->GetComponentRotation().ToString());
 		UE_LOG(LogTemp, Warning, TEXT("DeltaTime: %s!"), *FString::SanitizeFloat(DeltaTime));
 		*/
-		FRotator NewRotation =GetActorRotation();
+		FRotator NewRotation = GetActorRotation();
 		float DeltaRotation = DeltaTime * RotationSpeed;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
 		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
 	}
+}
+
+void APlanet::DestroyPlanet()
+{
+	Destroy();
 }
 
 

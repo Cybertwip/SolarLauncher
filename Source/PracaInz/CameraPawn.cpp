@@ -49,8 +49,6 @@ void ACameraPawn::Tick(float DeltaTime)
 		//CameraArm->TargetArmLength = 600.0f;
 		bOnChangePlanet = false;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
-	
 }
 
 // Called to bind functionality to input
