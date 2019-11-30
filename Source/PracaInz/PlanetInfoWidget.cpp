@@ -3,6 +3,8 @@
 
 #include "PlanetInfoWidget.h"
 #include "PracaInzGameState.h"
+#include "Engine.h"
+#include "TimerManager.h"
 #include "Planet.h"
 
 
@@ -21,6 +23,8 @@ void UPlanetInfoWidget::NativeConstruct()
 	FScriptDelegate DelegateTime;
 	DelegateTime.BindUFunction(this, "OnCommittedTime");
 	SecondsTextBox->OnTextCommitted.Add(DelegateTime);
+
+	ResetButton->OnClicked.AddDynamic(this, &UPlanetInfoWidget::OnReset);
 }
 
 void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
@@ -41,13 +45,32 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		}
 		PlanetMassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->PlanetMass))));
 	}
-
+	if (SecondsTextBox)
+	{
+		if (SecondsTextBox->Visibility == ESlateVisibility::Hidden)
+		{
+			SecondsTextBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		{
+			SecondsTextBox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->SecondsInSimulation))));
+		}
+	}
+	if (ResetButton)
+	{
+		if (ResetButton->Visibility == ESlateVisibility::Hidden)
+		{
+			ResetButton->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
 }
+	
 
 void UPlanetInfoWidget::OnCommittedPlanetMass(const FText& Text, ETextCommit::Type CommitMethod) const
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
+		
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
 		Planet->PlanetMass = FCString::Atof(*PlanetMassTextBox->GetText().ToString());
 		Planet->p = Planet->PlanetMass * Planet->Velocity;
@@ -62,4 +85,10 @@ void UPlanetInfoWidget::OnCommittedTime(const FText& Text, ETextCommit::Type Com
 		SecondsTextBox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->SecondsInSimulation))));
 	}
 }
+
+void UPlanetInfoWidget::OnReset()
+{
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+}
+
 

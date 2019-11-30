@@ -22,5 +22,5 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 		double G = 49.004e-7;
 		double BaseMass;
 		double BaseDistance;
-		int64 SecondsInSimulation = 86400;
+		int64 SecondsInSimulation = 1;
 };

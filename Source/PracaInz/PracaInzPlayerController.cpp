@@ -14,5 +14,5 @@ void APracaInzPlayerController::BeginPlay()
 }
 void APracaInzPlayerController::SetupInputComponent()
 {
- 
+	 
 }

@@ -49,7 +49,7 @@ void APlanet::Tick(float DeltaTime)
 	{
 		DestroyPlanet();
 	}
-	UpdatePlanetPosition(DeltaTime);
+		UpdatePlanetPosition(DeltaTime);
 }
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
@@ -92,6 +92,11 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			else
 			{
 				p += Planet->p;
+				PlanetMass += Planet->PlanetMass;
+				if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+				{
+					PracaInzHUD->UpdatePlanetInfo(this);
+				}
 			}
 		}
 	}
@@ -117,11 +122,21 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 				F += (((PlanetMass) * (x->PlanetMass)) / (distance)) * r;
 			}
 		}
+		/*	LeapFrog */
+		/*
+		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
+		FVector a = F / PlanetMass;
+		Velocity += 0.5 * a * PracaInzGameState->SecondsInSimulation;
+		SetActorLocation(GetActorLocation() + Velocity * PracaInzGameState->SecondsInSimulation);
+		*/
+		/*Euler*/
+		
 		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
 		FVector New_p1 = p + (F*PracaInzGameState->SecondsInSimulation);
 		Velocity = New_p1 / PlanetMass;
 		SetActorLocation(GetActorLocation() + Velocity*PracaInzGameState->SecondsInSimulation);
 		p = New_p1;
+		
 		/*
 		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
 		UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
@@ -135,6 +150,8 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
 		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
+		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
+		UE_LOG(LogTemp, Warning, TEXT("Location X: %s!"), *FString::SanitizeFloat(GetActorLocation().X));
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "PlanetInfoWidget.h"
 #include "SStandardSlateWidget.h"
 #include "Widgets/SWeakWidget.h"
+#include "PracaInzGameState.h"
 #include "Runtime/Engine/Classes/Engine/Engine.h"
 #include "PracaInzPlayerController.h"
 
@@ -37,7 +38,10 @@ void APracaInzHUD::BeginPlay()
 		if (PlanetInfoWidget)
 		{
 			PlanetInfoWidget->AddToViewport();
-			PlanetInfoWidget->SetVisibility(ESlateVisibility::Hidden);
+			if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+			{
+				UpdatePlanetInfo(PracaInzGameState->Planets[0]);
+			}
 		}
 	}
 }

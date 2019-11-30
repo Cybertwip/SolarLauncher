@@ -20,18 +20,22 @@ class PRACAINZ_API UPlanetInfoWidget : public UUserWidget
 public:
 	UPlanetInfoWidget(const FObjectInitializer& ObjectInitializer);
 
-	virtual void NativeConstruct() override;
-
+	virtual void NativeConstruct() override;				  
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UTextBlock* TXTPlanet;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UEditableTextBox* PlanetMassTextBox;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UEditableTextBox* SecondsTextBox;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UButton* ResetButton;
+
 	void UpdatePlanetInfo(APlanet* Planet);
 
 	UFUNCTION()
 		void OnCommittedPlanetMass(const FText& Text, ETextCommit::Type CommitMethod) const;
 	UFUNCTION()
 		void OnCommittedTime(const FText& Text, ETextCommit::Type CommitMethod) const;
+	UFUNCTION()
+		void OnReset();
 };

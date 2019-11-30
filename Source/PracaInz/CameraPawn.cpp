@@ -32,7 +32,8 @@ void ACameraPawn::BeginPlay()
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		PracaInzGameState->Camera = this;
-		Focused = Cast<USceneComponent>(PracaInzGameState->Planets[1]->PlanetMesh);
+		Focused = Cast<USceneComponent>(PracaInzGameState->Planets[0]->PlanetMesh);
+		PracaInzGameState->CurrentPlanet = PracaInzGameState->Planets[0];
 		RootComponent = Focused;		CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));		CameraArm->AttachTo(RootComponent);
 		CameraArm->TargetArmLength = 600.0f;
 		//CameraArm->TargetOffset = FVector(100.0f, 0.f, 100.0f);
