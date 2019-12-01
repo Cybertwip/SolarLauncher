@@ -38,6 +38,8 @@ public:
 		FString Name;
 
 	bool bIsBeingDestroyed = false;
+	// Variable used to calulate initial velocity acording to deltatime
+	bool bIsFirstCalculationOfVelocity = true;
 	FTimerHandle DestroyTimer;
 
 	UFUNCTION()

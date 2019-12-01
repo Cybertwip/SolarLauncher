@@ -33,7 +33,7 @@ void APlanet::BeginPlay()
 {
 	Super::BeginPlay();
 	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
-	p = InitialVelocity * PlanetMass/60;
+	p = InitialVelocity * PlanetMass;
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 	{
 		PracaInzGameModeBase->OnPlanetCreate(this);
@@ -45,11 +45,15 @@ void APlanet::BeginPlay()
 void APlanet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (bIsFirstCalculationOfVelocity)
+	{
+		p *= DeltaTime;		bIsFirstCalculationOfVelocity = false;
+	}
 	if (bIsBeingDestroyed)
 	{
 		DestroyPlanet();
 	}
-		UpdatePlanetPosition(DeltaTime);
+			UpdatePlanetPosition(DeltaTime);
 }
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
@@ -152,6 +156,9 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
 		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
 		UE_LOG(LogTemp, Warning, TEXT("Location X: %s!"), *FString::SanitizeFloat(GetActorLocation().X));
+		UE_LOG(LogTemp, Warning, TEXT("Velocity X: %s!"), *FString::SanitizeFloat(Velocity.X));
+		UE_LOG(LogTemp, Warning, TEXT("Velocity Y: %s!"), *FString::SanitizeFloat(Velocity.Y));
+		UE_LOG(LogTemp, Warning, TEXT("Velocity Z: %s!"), *FString::SanitizeFloat(Velocity.Z));
 	}
 }
 
