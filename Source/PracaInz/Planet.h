@@ -31,15 +31,21 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 		FVector InitialVelocity;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		int RotationSpeed;
-	FVector p;
-	FVector Velocity;
+		float RotationSpeed;
+	UPROPERTY(EditAnywhere, Category = "Components")
+		float Diameter;
+	UPROPERTY(EditAnywhere, Category = "Components")
+		float Inclination;
 	UPROPERTY(EditAnywhere, Category = "Components")
 		FString Name;
+	FVector p;
+	FVector Velocity;
+	FVector a;
+	
 
 	bool bIsBeingDestroyed = false;
-	// Variable used to calulate initial velocity acording to deltatime
-	bool bIsFirstCalculationOfVelocity = true;
+	// zmienna do sprawdzenia, czy wykonac pierwsze obliczenia
+	bool bFirstCalculations = true;
 	FTimerHandle DestroyTimer;
 
 	UFUNCTION()
@@ -51,4 +57,5 @@ public:
 
 	void UpdatePlanetPosition(float DeltaTime);
 	void DestroyPlanet();
+	void InitialCalculations(float DeltaTime);
 };

@@ -6,9 +6,7 @@
 #include "Classes/Components/StaticMeshComponent.h"
 #include "Camera/CameraComponent.h"
 #include "PracaInzGameModeBase.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "PracaInzGameState.h"
-
 #include "Planet.h"
 
 // Sets default values
@@ -72,7 +70,6 @@ void ACameraPawn::ZoomIn()
 
 void ACameraPawn::ZoomOut()
 {
-	if(CameraArm->TargetArmLength<2000)
 		CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10;
 }
 

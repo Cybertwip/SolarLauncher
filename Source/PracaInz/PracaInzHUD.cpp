@@ -23,15 +23,6 @@ void APracaInzHUD::DrawHUD()
 void APracaInzHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	/*
-	MyUIWidget = SNew(SStandardSlateWidget).OwnerHUDArg(this);
-
-	GEngine->GameViewport->AddViewportWidgetContent(
-		SNew(SWeakWidget)
-		.PossiblyNullContent(MyUIWidget.ToSharedRef())
-	);
-	MyUIWidget->SetVisibility(EVisibility::Visible);
-	*/
 	if (PlanetInfoWidgetClass)
 	{
 		PlanetInfoWidget = CreateWidget<UPlanetInfoWidget>(GetWorld(), PlanetInfoWidgetClass);
@@ -49,6 +40,11 @@ void APracaInzHUD::BeginPlay()
 void APracaInzHUD::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		if(!PlanetInfoWidget->IsHovered())
+			UpdatePlanetInfo(PracaInzGameState->CurrentPlanet);
+	}
 }
 
 void APracaInzHUD::UpdatePlanetInfo(APlanet* Planet)

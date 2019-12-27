@@ -17,7 +17,6 @@ void APracaInzGameModeBase::OnPlanetCreate(APlanet* Planet)
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GameState))
 	{
 		PracaInzGameState->Planets.Add(Planet);
-		UE_LOG(LogTemp, Warning, TEXT("Planet added!"));
 	}
 }
 

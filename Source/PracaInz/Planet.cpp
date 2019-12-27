@@ -7,7 +7,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "DrawDebugHelpers.h"
 #include "PracaInzHUD.h"
-#include "TimerManager.h"
 #include "Camera\CameraComponent.h"
 #include "Classes/Components/StaticMeshComponent.h"
 
@@ -20,12 +19,16 @@ APlanet::APlanet()
 	PlanetMesh = CreateDefaultSubobject<UStaticMeshComponent>("PlanetMesh");
 	PlanetMesh->SetAbsolute(true, true, true);
 	OnClicked.AddUniqueDynamic(this, &APlanet::OnSelected);
+	
 	SetRootComponent(PlanetMesh);
 	InitialVelocity.X = 0.f;
 	InitialVelocity.Y = 0.f;
 	InitialVelocity.Z = 0.f;
+	p = FVector(0, 0, 0);
 	PlanetMass = 1;
-
+	Diameter = 1;
+	Inclination = 0;
+	
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +36,12 @@ void APlanet::BeginPlay()
 {
 	Super::BeginPlay();
 	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
+	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		InitialVelocity *= PracaInzGameState->BaseDistance; 
+		Velocity = InitialVelocity;
+	}
 	p = InitialVelocity * PlanetMass;
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 	{
@@ -45,20 +54,49 @@ void APlanet::BeginPlay()
 void APlanet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (bIsFirstCalculationOfVelocity)
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
-		p *= DeltaTime;		bIsFirstCalculationOfVelocity = false;
+		PracaInzGameState->CurrentDeltaTime = DeltaTime;
+	}
+	/*
+	sprawdzenie, czy wykonac pierwsze obliczenia
+	*/
+	if (bFirstCalculations)
+	{
+		/*
+		ustawienie zmiennej sprawdzajacej na false, aby nie wykonywac tych obliczen wiele razy
+		*/
+		bFirstCalculations = false;
+		/*
+		aby zachowac skale 1s nalezy pomnozyc wszytkie wartosci, w ktorych jest 
+		jednostka czasu przez ilosc czasu uplywajaca miedzy klatkami,
+		w tym przypadku jest to ped
+		*/
+		p *=DeltaTime;		/*		jak wyzej		*/		Velocity *= DeltaTime;
+		InitialCalculations(DeltaTime);
+		FVector x;
+		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		{
+			x = GetActorLocation() - PracaInzGameState->Planets[0]->GetActorLocation();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Location before: %s!"), *x.ToString());
+		x = x.GetSafeNormal();
+		p = p.RotateAngleAxis(45, FVector(1, 0, 0));
+		Velocity = Velocity.RotateAngleAxis(45, FVector(1, 0, 0));
+		UE_LOG(LogTemp, Warning, TEXT("Location after: %s!"), *x.ToString());
+		//SetActorLocation(GetActorLocation().RotateAngleAxis(90, FVector(0, 0, 1)));
+		//p = p.RotateAngleAxis(90, FVector(0, 0, 1));
+		//Velocity = Velocity.RotateAngleAxis(90, FVector(0, 0, 1));
 	}
 	if (bIsBeingDestroyed)
 	{
 		DestroyPlanet();
 	}
-			UpdatePlanetPosition(DeltaTime);
+	UpdatePlanetPosition(DeltaTime);
 }
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		PracaInzGameState->Camera->Focused = Cast<USceneComponent>(PlanetMesh);
@@ -80,7 +118,7 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 	{
 		if (APlanet* Planet = Cast<APlanet>(OtherActor))
 		{
-			if (Planet->PlanetMass >= PlanetMass)
+			if (Planet->PlanetMass > PlanetMass)
 			{
 				PracaInzGameState->CurrentPlanet = nullptr;
 				PracaInzGameState->Planets.Remove(this);
@@ -93,7 +131,7 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 				PracaInzGameState->Camera->bOnChangePlanet = true;
 				bIsBeingDestroyed = true;
 			}
-			else
+			else if(Planet->PlanetMass < PlanetMass)
 			{
 				p += Planet->p;
 				PlanetMass += Planet->PlanetMass;
@@ -101,6 +139,13 @@ void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 				{
 					PracaInzHUD->UpdatePlanetInfo(this);
 				}
+			}
+			else
+			{
+				PracaInzGameState->Planets.Remove(this);
+				PracaInzGameState->Planets.Remove(Planet);
+				Planet->bIsBeingDestroyed = true;
+				bIsBeingDestroyed = true;
 			}
 		}
 	}
@@ -111,7 +156,98 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		FVector r;
-		FVector F;
+		FVector F = FVector(0,0,0);
+		double distance;
+		/*
+		petla dla kazdego obiektu, ktory znajduje sie w ukladzie wspolrzednych
+		*/
+		for (APlanet* x : PracaInzGameState->Planets)
+		{
+			/*
+			pominiecie planety, na rzecz ktorej wykonywane sa obliczenia
+			*/
+			if (x == this)
+			{
+				continue;
+			}
+			else
+			{
+				/*
+				wyznaczenie wektora odleglosci
+				*/
+				r = x->GetActorLocation() - GetActorLocation();
+				/*
+				wyznaczenie odleglosci pomiedzy obiektami
+				*/
+				distance = r.Size() * r.Size() * r.Size();
+				/*
+				wyznaczenie sily dzialajecej na dany obiekt od znajdujacego sie w ukladzie wspolrzednych
+				*/
+				F += (((PlanetMass) * (x->PlanetMass)) / (distance)) * r;
+			}
+		}
+		
+#define _EULER_
+#ifndef _EULER_		
+		/*	LeapFrog */
+		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
+		FVector New_a = F / PlanetMass;
+		SetActorLocation(GetActorLocation() + Velocity * PracaInzGameState->SecondsInSimulation + a *
+			PracaInzGameState->SecondsInSimulation * PracaInzGameState->SecondsInSimulation * 0.5);
+		Velocity = Velocity + (a + New_a)*PracaInzGameState->SecondsInSimulation*0.5;
+		a = New_a;
+#else
+		/*Euler*/
+		/*
+		pomnozenie wyliczonej sily przez stala grawitacji, w tym miejscu nastepuje mnozenie przez 
+		kwadrat czasu, ktory uplywa mniedzy klatkami sekund, poniewaz jednostki czasu w stalej grawitacji sa 
+		w kwadracie
+		*/
+		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
+		/*
+		obliczenie nowego pedu na podstawie aktualnego oraz skoku czasowego
+		*/
+		FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
+		/*
+		obliczenie nowej predkosci
+		*/
+		Velocity = New_p / PlanetMass;
+		/*
+		obliczenie i ustawienie planety w nowej pozycji na podstawie predkosci i skoku czasowego
+		*/
+		SetActorLocation(GetActorLocation() + (Velocity * PracaInzGameState->SecondsInSimulation));
+		/*
+		zapamietanie nowo obliczonego pedu
+		*/
+		p = New_p;
+#endif
+		/*
+		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
+		UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Velocity: %s!"), *Velocity.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Force: %s!"), *F.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *PlanetMesh->GetComponentRotation().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("DeltaTime: %s!"), *FString::SanitizeFloat(DeltaTime));
+		*/
+		FRotator NewRotation = GetActorRotation();
+		float DeltaRotation = DeltaTime * RotationSpeed;
+		NewRotation.Yaw += DeltaRotation;
+		SetActorRotation(NewRotation);
+		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
+	}
+}
+
+void APlanet::DestroyPlanet()
+{
+	Destroy();
+}
+
+void APlanet::InitialCalculations(float DeltaTime)
+{
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		FVector r;
+		FVector F = FVector(0, 0, 0);
 		double distance;
 		for (APlanet* x : PracaInzGameState->Planets)
 		{
@@ -126,45 +262,9 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 				F += (((PlanetMass) * (x->PlanetMass)) / (distance)) * r;
 			}
 		}
-		/*	LeapFrog */
-		/*
 		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
-		FVector a = F / PlanetMass;
-		Velocity += 0.5 * a * PracaInzGameState->SecondsInSimulation;
-		SetActorLocation(GetActorLocation() + Velocity * PracaInzGameState->SecondsInSimulation);
-		*/
-		/*Euler*/
-		
-		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
-		FVector New_p1 = p + (F*PracaInzGameState->SecondsInSimulation);
-		Velocity = New_p1 / PlanetMass;
-		SetActorLocation(GetActorLocation() + Velocity*PracaInzGameState->SecondsInSimulation);
-		p = New_p1;
-		
-		/*
-		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
-		UE_LOG(LogTemp, Warning, TEXT("Location: %s!"), *GetActorLocation().ToString());
-		UE_LOG(LogTemp, Warning, TEXT("Velocity: %s!"), *Velocity.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("Force: %s!"), *F.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *PlanetMesh->GetComponentRotation().ToString());
-		UE_LOG(LogTemp, Warning, TEXT("DeltaTime: %s!"), *FString::SanitizeFloat(DeltaTime));
-		*/
-		FRotator NewRotation = GetActorRotation();
-		float DeltaRotation = DeltaTime * RotationSpeed;
-		NewRotation.Yaw += DeltaRotation;
-		SetActorRotation(NewRotation);
-		DrawDebugPoint(GetWorld(), GetActorLocation(), 2, FColor(255, 255, 255), false, 3);
-		UE_LOG(LogTemp, Warning, TEXT("Name: %s!"), *Name);
-		UE_LOG(LogTemp, Warning, TEXT("Location X: %s!"), *FString::SanitizeFloat(GetActorLocation().X));
-		UE_LOG(LogTemp, Warning, TEXT("Velocity X: %s!"), *FString::SanitizeFloat(Velocity.X));
-		UE_LOG(LogTemp, Warning, TEXT("Velocity Y: %s!"), *FString::SanitizeFloat(Velocity.Y));
-		UE_LOG(LogTemp, Warning, TEXT("Velocity Z: %s!"), *FString::SanitizeFloat(Velocity.Z));
+		a = F / PlanetMass;
 	}
-}
-
-void APlanet::DestroyPlanet()
-{
-	Destroy();
 }
 
 

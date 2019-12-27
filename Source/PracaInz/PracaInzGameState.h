@@ -19,8 +19,10 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 		TArray<APlanet*> Planets;
 		ACameraPawn* Camera;
 		APlanet* CurrentPlanet;
-		double G = 49.004e-7;
-		double BaseMass;
-		double BaseDistance;
-		int64 SecondsInSimulation = 1;
+		//base mass = moon mass
+		//base distance = 100 000 km
+		double BaseDistance = 1/(1.5E5);
+		double G = 1.179E-10;
+		int64 SecondsInSimulation = 86400;
+		float CurrentDeltaTime = 1/60;
 };
