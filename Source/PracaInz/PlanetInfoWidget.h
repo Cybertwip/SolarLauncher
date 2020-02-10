@@ -22,7 +22,7 @@ public:
 
 	virtual void NativeConstruct() override;				  
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* TXTPlanet;
+		UTextBlock* PlanetTextInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UEditableTextBox* PlanetMassTextBox;
@@ -33,8 +33,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UEditableTextBox* VelocityTextBox;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UEditableTextBox* DiameterTextBox;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UEditableTextBox* InclinationTextBox;
@@ -44,26 +42,33 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UButton* ExitButton;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UButton* StopButton;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UTextBlock* StopButtonText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UTextBlock* BaseMassText;
+	bool isStopped = false;
 
 	void UpdatePlanetInfo(APlanet* Planet);
 
 	UFUNCTION()
-		void OnCommittedPlanetMass(const FText& Text, ETextCommit::Type CommitMethod) const;
+		void OnCommittedPlanetMass();
 
 	UFUNCTION()
-		void OnCommittedTime(const FText& Text, ETextCommit::Type CommitMethod) const;
+		void OnCommittedTime() ;
 
 	UFUNCTION()
-		void OnCommittedVelocity(const FText& Text, ETextCommit::Type CommitMethod) const;
+		void OnCommittedVelocity() ;
 
 	UFUNCTION()
-		void OnCommittedDiameter(const FText& Text, ETextCommit::Type CommitMethod) const;
-
-	UFUNCTION()
-		void OnCommittedInclination(const FText& Text, ETextCommit::Type CommitMethod) const;
+		void OnCommittedInclination() ;
 
 	UFUNCTION()
 		void OnReset();
 	UFUNCTION()
 		void OnExit();
+	UFUNCTION()
+		void OnStop();
 };

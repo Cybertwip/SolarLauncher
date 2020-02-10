@@ -38,9 +38,16 @@ public:
 		float Inclination;
 	UPROPERTY(EditAnywhere, Category = "Components")
 		FString Name;
+	UPROPERTY(EditAnywhere, Category = "Components")
+		FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
 	FVector a;
+	//do zmiany inklinacji
+	FVector startPosition;
+	FVector startVelocity;
+	FVector startP;
+	
 	
 
 	bool bIsBeingDestroyed = false;

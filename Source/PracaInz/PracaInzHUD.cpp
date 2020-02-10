@@ -3,8 +3,6 @@
 
 #include "PracaInzHUD.h"
 #include "PlanetInfoWidget.h"
-#include "SStandardSlateWidget.h"
-#include "Widgets/SWeakWidget.h"
 #include "PracaInzGameState.h"
 #include "Runtime/Engine/Classes/Engine/Engine.h"
 #include "PracaInzPlayerController.h"
@@ -42,7 +40,7 @@ void APracaInzHUD::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
-		if(!PlanetInfoWidget->IsHovered())
+		if(!PlanetInfoWidget->IsHovered() && PracaInzGameState->CurrentPlanet!=nullptr)
 			UpdatePlanetInfo(PracaInzGameState->CurrentPlanet);
 	}
 }

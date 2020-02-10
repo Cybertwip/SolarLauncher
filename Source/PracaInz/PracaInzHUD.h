@@ -11,8 +11,6 @@
 /**
  * 
  */
-
-class SStandardSlateWidget;
 UCLASS()
 class PRACAINZ_API APracaInzHUD : public AHUD
 {
@@ -28,8 +26,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 		TSubclassOf<UUserWidget> PlanetInfoWidgetClass;
-
-	TSharedPtr<SStandardSlateWidget> MyUIWidget;
 
 	class UPlanetInfoWidget* PlanetInfoWidget;
 

@@ -12,12 +12,12 @@
 UCLASS()
 class PRACAINZ_API APracaInzPlayerController : public APlayerController
 {
+public:
 	GENERATED_BODY()
 		APracaInzPlayerController();
 
 	virtual void BeginPlay() override;
 
-	virtual void SetupInputComponent() override;
-
+	virtual void SetupInputComponent() override;
 	
 };

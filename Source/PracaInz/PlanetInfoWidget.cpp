@@ -4,7 +4,6 @@
 #include "PlanetInfoWidget.h"
 #include "PracaInzGameState.h"
 #include "Engine.h"
-#include "TimerManager.h"
 #include "Planet.h"
 
 
@@ -28,10 +27,6 @@ void UPlanetInfoWidget::NativeConstruct()
 	DelegateVelocity.BindUFunction(this, "OnCommittedVelocity");
 	VelocityTextBox->OnTextCommitted.Add(DelegateVelocity);
 
-	FScriptDelegate DelegateDiameter;
-	DelegateDiameter.BindUFunction(this, "OnCommittedDiameter");
-	DiameterTextBox->OnTextCommitted.Add(DelegateDiameter);
-
 	FScriptDelegate DelegateInclination;
 	DelegateInclination.BindUFunction(this, "OnCommittedInclination");
 	InclinationTextBox->OnTextCommitted.Add(DelegateInclination);
@@ -39,17 +34,20 @@ void UPlanetInfoWidget::NativeConstruct()
 	ResetButton->OnClicked.AddDynamic(this, &UPlanetInfoWidget::OnReset);
 
 	ExitButton->OnClicked.AddDynamic(this, &UPlanetInfoWidget::OnExit);
+
+	StopButton->OnClicked.AddDynamic(this, &UPlanetInfoWidget::OnStop);
+	StopButton->AddChild(StopButtonText);
 }
 
 void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 {
-	if (TXTPlanet)
+	if (PlanetTextInfo)
 	{
-		if (TXTPlanet->Visibility == ESlateVisibility::Hidden)
+		if (PlanetTextInfo->Visibility == ESlateVisibility::Hidden)
 		{
-			TXTPlanet->SetVisibility(ESlateVisibility::Visible);
+			PlanetTextInfo->SetVisibility(ESlateVisibility::Visible);
 		}	
-		TXTPlanet->SetText(FText::FromString("Focused planet: " + Planet->Name + "!"));
+		PlanetTextInfo->SetText(FText::FromString("Nazwa obiektu: " + Planet->Name));
 	}
 	if (PlanetMassTextBox)
 	{
@@ -58,14 +56,6 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			PlanetMassTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
 		PlanetMassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->PlanetMass))));
-	}
-	if (DiameterTextBox)
-	{
-		if (DiameterTextBox->Visibility == ESlateVisibility::Hidden)
-		{
-			DiameterTextBox->SetVisibility(ESlateVisibility::Visible);
-		}
-		DiameterTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->Diameter))));
 	}
 	if (InclinationTextBox)
 	{
@@ -112,20 +102,48 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			ExitButton->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
+	if (StopButton)
+	{
+		if (StopButton->Visibility == ESlateVisibility::Hidden)
+		{
+			StopButton->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	if (BaseMassText)
+	{
+		if (BaseMassText->Visibility == ESlateVisibility::Hidden)
+		{
+			BaseMassText->SetVisibility(ESlateVisibility::Visible);
+		}
+		if(FName(*GetWorld()->GetName()).IsEqual(FName("SolarSystem")))
+			BaseMassText->SetText(FText::FromString("mas Ziemi"));
+		else
+			BaseMassText->SetText(FText::FromString("mas Ksiezyca"));
+	}
 }
 	
 
-void UPlanetInfoWidget::OnCommittedPlanetMass(const FText& Text, ETextCommit::Type CommitMethod) const
+void UPlanetInfoWidget::OnCommittedPlanetMass() 
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
-		Planet->PlanetMass = FCString::Atof(*PlanetMassTextBox->GetText().ToString());
+		double mass = FCString::Atof(*PlanetMassTextBox->GetText().ToString());
+		for (int i=0; i != PracaInzGameState->Planets.Num();i++)
+		{
+			APlanet* x = PracaInzGameState->Planets[i];
+			if (fabs(x->PlanetMass - mass) <= 0.0000001 * fabs(x->PlanetMass) && x!=Planet)	
+			{
+				mass = mass + 0.0001;
+				i = -1;
+			}
+		}
+		Planet->PlanetMass = mass;
 		Planet->p = Planet->PlanetMass * Planet->Velocity;
 	}
 }
 
-void UPlanetInfoWidget::OnCommittedTime(const FText& Text, ETextCommit::Type CommitMethod) const
+void UPlanetInfoWidget::OnCommittedTime() 
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
@@ -134,47 +152,47 @@ void UPlanetInfoWidget::OnCommittedTime(const FText& Text, ETextCommit::Type Com
 	}
 }
 
-void UPlanetInfoWidget::OnCommittedVelocity(const FText& Text, ETextCommit::Type CommitMethod) const
+void UPlanetInfoWidget::OnCommittedVelocity() 
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
 
-		//switch units 
-		Planet->Velocity = FCString::Atof(*VelocityTextBox->GetText().ToString()) * 
-		PracaInzGameState -> CurrentDeltaTime * PracaInzGameState->BaseDistance * 
-		//univector
-		Planet->Velocity/Planet->Velocity.Size();
-
+		if(FCString::Atof(*VelocityTextBox->GetText().ToString())==0)
+		{ 
+			Planet->Velocity = 0.00001 *
+			PracaInzGameState->CurrentDeltaTime * PracaInzGameState->BaseDistance *
+			Planet->Velocity / Planet->Velocity.Size();
+		}
+		else
+		{ 
+			Planet->Velocity = FCString::Atof(*VelocityTextBox->GetText().ToString()) * 
+			PracaInzGameState -> CurrentDeltaTime * PracaInzGameState->BaseDistance * 
+			Planet->Velocity/Planet->Velocity.Size();
+		}
 		Planet->p = Planet->PlanetMass * Planet->Velocity;
 	}
 }
 
-void UPlanetInfoWidget::OnCommittedDiameter(const FText& Text, ETextCommit::Type CommitMethod) const
-{	
-	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-	{
-		APlanet* Planet = PracaInzGameState->CurrentPlanet;
-		Planet->Diameter = FCString::Atof(*DiameterTextBox->GetText().ToString());
-		Planet->PlanetMesh->SetWorldScale3D(FVector(Planet->Diameter, Planet->Diameter, Planet->Diameter));
-	}
-}
-
-void UPlanetInfoWidget::OnCommittedInclination(const FText& Text, ETextCommit::Type CommitMethod) const
+void UPlanetInfoWidget::OnCommittedInclination() 
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
+		if (Planet == PracaInzGameState->Planets[0])
+			return;
+		float oldInclination = Planet->Inclination;
 		Planet->Inclination = FCString::Atof(*InclinationTextBox->GetText().ToString());
-		FVector R = Planet->GetActorLocation() - PracaInzGameState->Planets[0]->GetActorLocation();
-		FVector Axis = R;
-		Axis.Normalize();
-		Axis = Axis.GetSafeNormal();
-		Planet->p = Planet->p.RotateAngleAxis(Planet->Inclination,Axis);
-		Planet->Velocity = Planet->Velocity.RotateAngleAxis(Planet->Inclination,Axis);
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Rotation: %s"), *NewR.ToString()));
-		//Planet->SetActorLocation(NewR);
-		UE_LOG(LogTemp, Warning, TEXT("Rotation: %s!"), *R.Rotation().ToString());
+		Planet->p = Planet->startP;
+		Planet->Velocity = Planet->startVelocity;
+		Planet->SetActorLocation(Planet->startPosition);
+		FVector R = Planet->startPosition - PracaInzGameState->Planets[0]->GetActorLocation();
+		if (R.Normalize())
+		{
+		
+			Planet->p = Planet->p.RotateAngleAxis(Planet->Inclination, R);
+			Planet->Velocity = Planet->Velocity.RotateAngleAxis(Planet->Inclination, R);
+		}
 	}
 }
 
@@ -185,7 +203,13 @@ void UPlanetInfoWidget::OnReset()
 
 void UPlanetInfoWidget::OnExit()
 {
-	FGenericPlatformMisc::RequestExit(false);
+	UGameplayStatics::OpenLevel(this, FName("MainMenu"), false);
+}
+
+void UPlanetInfoWidget::OnStop()
+{
+	isStopped = !isStopped;
+	UGameplayStatics::SetGamePaused(GetWorld(), isStopped);
 }
 
 

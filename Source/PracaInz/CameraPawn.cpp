@@ -16,7 +16,7 @@ ACameraPawn::ACameraPawn()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CameraArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));	Focused = CreateDefaultSubobject<USceneComponent>("RootComponent");	RootComponent = Focused;	RootComponent->SetAbsolute(true, true, true);	CameraArm->SetupAttachment(RootComponent);	CameraArm->TargetArmLength = 600.0f;	CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));	CameraArm->bDoCollisionTest = false;	CameraArm->AttachTo(RootComponent);
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));	Focused = CreateDefaultSubobject<USceneComponent>("RootComponent");	RootComponent = Focused;	RootComponent->SetAbsolute(true, true, true);	CameraArm->SetupAttachment(RootComponent);	CameraArm->TargetArmLength = 1000.0f;	CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));	CameraArm->bDoCollisionTest = false;	CameraArm->AttachTo(RootComponent);
 	Camera->SetupAttachment(CameraArm);
 	Camera->AttachTo(CameraArm, USpringArmComponent::SocketName); 	CameraArm->bAbsoluteRotation = true;
    	
@@ -45,7 +45,6 @@ void ACameraPawn::Tick(float DeltaTime)
 	if (bOnChangePlanet)
 	{
 		RootComponent = Focused;		CameraArm->SetWorldRotation(CameraArm->GetComponentRotation());		CameraArm->AttachTo(RootComponent);
-		//CameraArm->TargetArmLength = 600.0f;
 		bOnChangePlanet = false;
 	}
 }
@@ -64,26 +63,23 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ACameraPawn::ZoomIn()
 {
-	if(CameraArm->TargetArmLength>100)
+	if(CameraArm->TargetArmLength>300)
 		CameraArm->TargetArmLength -= CameraArm->TargetArmLength / 10;
 }
 
 void ACameraPawn::ZoomOut()
 {
+	if(CameraArm->TargetArmLength<60000)
 		CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10;
 }
 
-//pitch
 void ACameraPawn::RotateY(float Value)
 {
 	FRotator NewPitch = CameraArm->GetComponentRotation();
-	///89.0f value is here to prevent camera roll
 	NewPitch.Pitch = FMath::Clamp(NewPitch.Pitch + Value, -89.0f, 89.0f);
 	CameraArm->SetWorldRotation(NewPitch);
 }
 
-
-//yaw 
 void ACameraPawn::RotateX(float Value)
 {
 	FRotator NewYaw = CameraArm->GetComponentRotation();

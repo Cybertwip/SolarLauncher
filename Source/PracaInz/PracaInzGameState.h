@@ -16,13 +16,17 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 	public:
+		APracaInzGameState();
+		virtual void BeginPlay() override;
 		TArray<APlanet*> Planets;
 		ACameraPawn* Camera;
 		APlanet* CurrentPlanet;
 		//base mass = moon mass
 		//base distance = 100 000 km
-		double BaseDistance = 1/(1.5E5);
-		double G = 1.179E-10;
+		UPROPERTY(EditAnywhere, Category = "Components")
+			double BaseDistance = 1/(1.5E5);
+		UPROPERTY(EditAnywhere, Category = "Components")
+			double G = 1.179E-10;
 		int64 SecondsInSimulation = 86400;
 		float CurrentDeltaTime = 1/60;
 };
