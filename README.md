@@ -3,5 +3,4 @@ User can change parameters of objects in simulations and program responds to the
 ## Launching
 In order to launch the project, it is needed to have Unreal Engine 4 installed. Then it is necessary to launch PracaInz file.  
 ## Sample usage
-https://user-images.githubusercontent.com/37154838/133044426-2625c90f-cda3-4c27-9b0f-01b9e4527130.mp4
-
+https://user-images.githubusercontent.com/37154838/133044957-5fb21a05-8c23-46dd-9b24-2e6cd25a92b6.mp4
