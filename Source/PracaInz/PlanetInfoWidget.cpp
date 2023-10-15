@@ -203,7 +203,7 @@ void UPlanetInfoWidget::OnReset()
 
 void UPlanetInfoWidget::OnExit()
 {
-	UGameplayStatics::OpenLevel(this, FName("MainMenu"), false);
+	UGameplayStatics::OpenLevel(this, FName("TestMainMenu"), false);
 }
 
 void UPlanetInfoWidget::OnStop()

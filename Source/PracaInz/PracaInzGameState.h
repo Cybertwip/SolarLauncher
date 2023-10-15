@@ -28,5 +28,11 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 		UPROPERTY(EditAnywhere, Category = "Components")
 			double G = 1.179E-10;
 		int64 SecondsInSimulation = 86400;
+		//int64 SecondsInSimulation = 166400;
 		float CurrentDeltaTime = 1/60;
+
+
+		//VR
+		APlanet* CurrentPlanetVR;
+		FVector CurrentPlanetVRScale;
 };

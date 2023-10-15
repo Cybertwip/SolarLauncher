@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Math/UnrealMath.h"
+#include "Components/WidgetComponent.h"
 #include "Planet.generated.h"
 
 UCLASS()
@@ -49,6 +50,17 @@ public:
 	FVector startP;
 	
 	
+	//VR
+	bool bIsBindedToPlayerInput = false;
+	bool bIsOverLapped = false;
+	bool bIsPaused = false;
+	FInputActionBinding* inputActionBindingLeft;
+	FInputActionBinding* inputActionBindingRight;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+		UWidgetComponent* planetInfoWidget;
+
+
 
 	bool bIsBeingDestroyed = false;
 	// zmienna do sprawdzenia, czy wykonac pierwsze obliczenia
@@ -60,9 +72,16 @@ public:
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+		void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+			class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UFUNCTION(BluePrintCallable)
+		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
 
 
 	void UpdatePlanetPosition(float DeltaTime);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);
+	void OnTriggerPressed();
+	void OnXButtonPressed();
 };
