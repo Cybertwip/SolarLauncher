@@ -9,6 +9,7 @@ public class PracaInzEditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
 
+		bOverrideBuildEnvironment = true;
 		ExtraModuleNames.AddRange( new string[] { "PracaInz" } );
 	}
 }

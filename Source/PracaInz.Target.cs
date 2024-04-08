@@ -9,6 +9,7 @@ public class PracaInzTarget : TargetRules
 	{
 		Type = TargetType.Game;
 
+		bOverrideBuildEnvironment = true;
 		ExtraModuleNames.AddRange( new string[] { "PracaInz" } );
 	}
 }

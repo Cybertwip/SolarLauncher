@@ -47,7 +47,7 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		{
 			PlanetTextInfo->SetVisibility(ESlateVisibility::Visible);
 		}	
-		PlanetTextInfo->SetText(FText::FromString("Nazwa obiektu: " + Planet->Name));
+		PlanetTextInfo->SetText(FText::FromString("Object Name: " + Planet->Name));
 	}
 	if (PlanetMassTextBox)
 	{
@@ -116,9 +116,9 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			BaseMassText->SetVisibility(ESlateVisibility::Visible);
 		}
 		if(FName(*GetWorld()->GetName()).IsEqual(FName("SolarSystem")))
-			BaseMassText->SetText(FText::FromString("mas Ziemi"));
+			BaseMassText->SetText(FText::FromString("Mass"));
 		else
-			BaseMassText->SetText(FText::FromString("mas Ksiezyca"));
+			BaseMassText->SetText(FText::FromString("Mass"));
 	}
 }
 	

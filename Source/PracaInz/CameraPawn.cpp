@@ -25,9 +25,8 @@ ACameraPawn::ACameraPawn()
 	CameraArm->TargetArmLength = 1000.0f;
 	CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));
 	CameraArm->bDoCollisionTest = false;
-	CameraArm->AttachTo(RootComponent);
+//	CameraArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	Camera->SetupAttachment(CameraArm);
-	Camera->AttachTo(CameraArm, USpringArmComponent::SocketName); 
 	CameraArm->SetUsingAbsoluteRotation(true);
 
    	
@@ -45,7 +44,7 @@ void ACameraPawn::BeginPlay()
 		PracaInzGameState->CurrentPlanet = PracaInzGameState->Planets[0];
 		RootComponent = Focused;
 		CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));
-		CameraArm->AttachTo(RootComponent);
+		CameraArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 		CameraArm->TargetArmLength = 600.0f;
 		//CameraArm->TargetOffset = FVector(100.0f, 0.f, 100.0f);
 	}
@@ -59,7 +58,7 @@ void ACameraPawn::Tick(float DeltaTime)
 	{
 		RootComponent = Focused;
 		CameraArm->SetWorldRotation(CameraArm->GetComponentRotation());
-		CameraArm->AttachTo(RootComponent);
+		CameraArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 		bOnChangePlanet = false;
 	}
 }

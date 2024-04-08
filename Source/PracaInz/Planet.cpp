@@ -7,7 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "DrawDebugHelpers.h"
 #include "PracaInzHUD.h"
-#include "Camera\CameraComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Classes/Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"

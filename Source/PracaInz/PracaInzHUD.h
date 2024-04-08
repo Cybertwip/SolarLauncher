@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Components\WidgetComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Planet.h"
 #include "PracaInzHUD.generated.h"
 

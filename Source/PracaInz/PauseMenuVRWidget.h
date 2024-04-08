@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Runtime\UMG\Public\UMG.h"
+#include "Runtime/UMG/Public/UMG.h"
 #include "Components/EditableTextBox.h"
 #include "Planet.h"
 #include "PauseMenuVRWidget.generated.h"
