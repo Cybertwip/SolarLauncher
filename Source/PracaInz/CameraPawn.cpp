@@ -85,14 +85,12 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ACameraPawn::ZoomIn()
 {
-	if(CameraArm->TargetArmLength>300)
-		CameraArm->TargetArmLength -= CameraArm->TargetArmLength / 10;
+	CameraArm->TargetArmLength -= CameraArm->TargetArmLength / 10.0f;
 }
 
 void ACameraPawn::ZoomOut()
 {
-	if(CameraArm->TargetArmLength<60000)
-		CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10;
+	CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10.0f;
 }
 
 void ACameraPawn::RotateY(float Value)
