@@ -5,6 +5,7 @@
 #include "PracaInzGameState.h"
 #include "Engine.h"
 #include "Planet.h"
+#include "Rocket.h"
 
 
 UPlanetInfoWidget::UPlanetInfoWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -122,6 +123,92 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 	}
 }
 	
+
+void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
+{
+	if (PlanetTextInfo)
+	{
+		if (PlanetTextInfo->Visibility == ESlateVisibility::Hidden)
+		{
+			PlanetTextInfo->SetVisibility(ESlateVisibility::Visible);
+		}
+		PlanetTextInfo->SetText(FText::FromString("Object Name: Falcon 9"));
+	}
+	if (PlanetMassTextBox)
+	{
+		if (PlanetMassTextBox->Visibility == ESlateVisibility::Hidden)
+		{
+			PlanetMassTextBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		PlanetMassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->RocketMass))));
+	}
+	if (InclinationTextBox)
+	{
+		if (InclinationTextBox->Visibility == ESlateVisibility::Hidden)
+		{
+			InclinationTextBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		//InclinationTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->Inclination))));
+		
+		InclinationTextBox->SetText(FText::FromString("N/A"));
+	}
+	if (VelocityTextBox)
+	{
+		if (VelocityTextBox->Visibility == ESlateVisibility::Hidden)
+		{
+			VelocityTextBox->SetVisibility(ESlateVisibility::Visible);
+		}
+		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		{
+			VelocityTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->Velocity.Size()
+																			   /PracaInzGameState->CurrentDeltaTime  /PracaInzGameState->BaseDistance))));
+		}
+	}
+	if (SecondsSlider)
+	{
+		if (SecondsSlider->Visibility == ESlateVisibility::Hidden)
+		{
+			SecondsSlider->SetVisibility(ESlateVisibility::Visible);
+		}
+		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		{
+			SecondsSlider->SetValue(PracaInzGameState->SecondsInSimulation);
+		}
+	}
+	if (ResetButton)
+	{
+		if (ResetButton->Visibility == ESlateVisibility::Hidden)
+		{
+			ResetButton->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	if (ExitButton)
+	{
+		if (ExitButton->Visibility == ESlateVisibility::Hidden)
+		{
+			ExitButton->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	if (StopButton)
+	{
+		if (StopButton->Visibility == ESlateVisibility::Hidden)
+		{
+			StopButton->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	if (BaseMassText)
+	{
+		if (BaseMassText->Visibility == ESlateVisibility::Hidden)
+		{
+			BaseMassText->SetVisibility(ESlateVisibility::Visible);
+		}
+		if(FName(*GetWorld()->GetName()).IsEqual(FName("SolarSystem")))
+			BaseMassText->SetText(FText::FromString(""));
+		else
+			BaseMassText->SetText(FText::FromString(""));
+	}
+}
+
 
 void UPlanetInfoWidget::OnCommittedPlanetMass() 
 {

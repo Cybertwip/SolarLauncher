@@ -58,3 +58,8 @@ void APracaInzGameState::SelectPreviousPlanet()
 
 }
 
+
+void APracaInzGameState::SelectRocket()
+{
+	Rocket->OnSelected(nullptr, FKey("Q"));	
+}

@@ -54,13 +54,12 @@ public:
 	bool bIsBindedToPlayerInput = false;
 	bool bIsOverLapped = false;
 	bool bIsPaused = false;
+	
 	FInputActionBinding* inputActionBindingLeft;
 	FInputActionBinding* inputActionBindingRight;
 
 	UPROPERTY(EditAnywhere, Category = "Components")
 		UWidgetComponent* planetInfoWidget;
-
-
 
 	bool bIsBeingDestroyed = false;
 	// zmienna do sprawdzenia, czy wykonac pierwsze obliczenia

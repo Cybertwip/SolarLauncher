@@ -53,6 +53,15 @@ void APracaInzGameModeBase::OnPlanetCreate(APlanet* Planet)
 	}
 }
 
+void APracaInzGameModeBase::OnRocketCreate(ARocket* Rocket)
+{
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GameState))
+	{
+		PracaInzGameState->Rocket = Rocket;
+	}
+}
+
+
 
 bool APracaInzGameModeBase::getIsEditMode() const
 {

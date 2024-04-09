@@ -7,6 +7,7 @@
 #include "Runtime/UMG/Public/UMG.h"
 #include "Components/EditableTextBox.h"
 #include "Planet.h"
+#include "Rocket.h"
 #include "PlanetInfoWidget.generated.h"
 
 /**
@@ -52,7 +53,8 @@ public:
 	bool isStopped = false;
 	
 	void UpdatePlanetInfo(APlanet* Planet);
-	
+	void UpdateRocketInfo(ARocket* Rocket);
+
 	UFUNCTION()
 	void OnSliderValueChanged(float Value);
 	

@@ -3,6 +3,7 @@
 //#pragma once
 
 #include "Planet.h"
+#include "Rocket.h"
 #include "CameraPawn.h"
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
@@ -21,10 +22,12 @@ public:
 	virtual void Tick(float DeltaSeconds) override; // Override the Tick function
 	void SelectNextPlanet();
 	void SelectPreviousPlanet();
-	
+	void SelectRocket();
+
 	TArray<APlanet*> Planets;
 	ACameraPawn* Camera;
 	APlanet* CurrentPlanet;
+	ARocket* Rocket;
 	//base mass = moon mass
 	//base distance = 100 000 km
 	UPROPERTY(EditAnywhere, Category = "Components")

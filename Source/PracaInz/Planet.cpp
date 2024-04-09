@@ -122,7 +122,6 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 		}
 		PracaInzGameState->Camera->bOnChangePlanet = true;
 	}
-
 }
 
 void APlanet::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

@@ -30,6 +30,7 @@ public:
 	class UPlanetInfoWidget* PlanetInfoWidget;
 
 	void UpdatePlanetInfo(APlanet* Planet);
+	//void UpdateRocketInfo(ARocket* Rocket);
 
 	
 };
