@@ -51,6 +51,10 @@ public:
 	bool bIsThrusterActive;
 	
 	FVector Velocity;
+	
+	UPROPERTY(EditAnywhere, Category = "Components")
+	FColor OrbitColor;
+
 
 private:
 	// State
