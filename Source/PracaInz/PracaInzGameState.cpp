@@ -5,7 +5,7 @@
 
 APracaInzGameState::APracaInzGameState()
 {
-	
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void APracaInzGameState::BeginPlay()

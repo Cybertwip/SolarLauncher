@@ -220,56 +220,20 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		APlanet* centralPlanet = nullptr; // Variable to store the planet with the biggest gravity pull
 		
 		// Find the planet with the biggest mass (central anchor)
-		double maxMass = -1.0;
+		double maxMass = this->PlanetMass;
 		for (APlanet* x : PracaInzGameState->Planets)
 		{
 			if (x->PlanetMass > maxMass)
 			{
 				maxMass = x->PlanetMass;
 				centralPlanet = x;
+				break;
 			}
 		}
-		if (centralPlanet == this)
+		if (centralPlanet == this || centralPlanet == nullptr)
 		{
-			double SemiMajorAxis = 1.5e5 * PracaInzGameState->BaseDistance; // Assuming BaseDistance scales distance appropriately
-			
-			// Calculate the distance vector to the central anchor with Y and Z as zero for vertical movement
-			r = FVector(0, 0, SemiMajorAxis) - GetActorLocation(); // Set Y and Z to zero for vertical movement
-			
-			// Calculate the distance between this planet and the central anchor
-			distance = r.SizeSquared();
-			
-			// Calculate the force acting on this planet from the central anchor
-			F = (PlanetMass * centralPlanet->PlanetMass) / distance * r.GetSafeNormal();
-			
-			// Multiply the calculated force by the gravitational constant
-			F *= PracaInzGameState->G * DeltaTime * DeltaTime;
-			
-			// Calculate the new momentum based on the current one and the time jump
-			FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
-			
-			// Calculate the new velocity
-			Velocity = New_p / PlanetMass;
-			
-			// Calculate and set the planet in the new position based on the velocity and the time jump
-			SetActorLocation(GetActorLocation() + (Velocity * PracaInzGameState->SecondsInSimulation));
-			
-			// Remember the newly calculated momentum
-			p = New_p;
-			
-			// Update rotation
-			FRotator NewRotation = GetActorRotation();
-			float DeltaRotation = DeltaTime * RotationSpeed * PracaInzGameState->SecondsInSimulation;
-			NewRotation.Yaw += DeltaRotation;
-			SetActorRotation(NewRotation);
-			
-			// Draw debug line to visualize orbit
-			DrawDebugLine(GetWorld(), oldLocation, GetActorLocation(), OrbitColor, false, 3);
-			
 			return;
 		}
-
-
 
 		// Calculate the distance vector to the central anchor
 		r = centralPlanet->GetActorLocation() - GetActorLocation();
