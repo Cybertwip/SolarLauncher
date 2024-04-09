@@ -12,31 +12,31 @@
 // Sets default values
 ACameraPawn::ACameraPawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	CameraArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Focused = CreateDefaultSubobject<USceneComponent>("RootComponent");
 	RootComponent = Focused;
 	RootComponent->SetAbsolute(true, true, true);
-
+	
 	CameraArm->SetupAttachment(RootComponent);
 	CameraArm->TargetArmLength = 1000.0f;
 	CameraArm->SetWorldRotation(FRotator(-45.f, 0.f, 0.f));
 	CameraArm->bDoCollisionTest = false;
-//	CameraArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	//	CameraArm->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	Camera->SetupAttachment(CameraArm);
 	CameraArm->SetUsingAbsoluteRotation(true);
-
-   	
+	
+	
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
 // Called when the game starts or when spawned
 void ACameraPawn::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		PracaInzGameState->Camera = this;
@@ -67,12 +67,20 @@ void ACameraPawn::Tick(float DeltaTime)
 void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	
 	PlayerInputComponent->BindAction("ZoomIn", IE_Pressed, this, &ACameraPawn::ZoomIn);
 	PlayerInputComponent->BindAction("ZoomOut", IE_Pressed, this, &ACameraPawn::ZoomOut);
 	PlayerInputComponent->BindAxis("RotateX", this, &ACameraPawn::RotateX);
 	PlayerInputComponent->BindAxis("RotateY", this, &ACameraPawn::RotateY);
-
+	
+	
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		
+	{
+		PlayerInputComponent->BindAction("RTrigger", IE_Pressed, PracaInzGameState, &APracaInzGameState::SelectNextPlanet);
+		PlayerInputComponent->BindAction("LTrigger", IE_Pressed, PracaInzGameState, &APracaInzGameState::SelectPreviousPlanet);
+	}
+	
 }
 
 void ACameraPawn::ZoomIn()
@@ -98,6 +106,6 @@ void ACameraPawn::RotateX(float Value)
 {
 	FRotator NewYaw = CameraArm->GetComponentRotation();
 	NewYaw.Yaw += Value;
-	CameraArm->SetWorldRotation(NewYaw);    
+	CameraArm->SetWorldRotation(NewYaw);
 }
 

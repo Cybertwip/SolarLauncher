@@ -3,6 +3,9 @@
 
 #include "PracaInzGameState.h"
 
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+
 APracaInzGameState::APracaInzGameState()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,3 +34,22 @@ void APracaInzGameState::Tick(float DeltaSeconds)
 	// Update the total elapsed time since the start of the simulation
 	TimeSinceStart += DeltaSeconds;
 }
+
+void APracaInzGameState::SelectNextPlanet()
+{
+	if (Planets.Num() == 0)
+		return;
+	
+	int32 NextIndex = (Planets.IndexOfByKey(CurrentPlanet) + 1) % Planets.Num();
+	CurrentPlanet = Planets[NextIndex];
+}
+
+void APracaInzGameState::SelectPreviousPlanet()
+{
+	if (Planets.Num() == 0)
+		return;
+	
+	int32 PreviousIndex = (Planets.IndexOfByKey(CurrentPlanet) - 1 + Planets.Num()) % Planets.Num();
+	CurrentPlanet = Planets[PreviousIndex];
+}
+
