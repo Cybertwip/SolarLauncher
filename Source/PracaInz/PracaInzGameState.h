@@ -18,6 +18,8 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 	public:
 		APracaInzGameState();
 		virtual void BeginPlay() override;
+		virtual void Tick(float DeltaSeconds) override; // Override the Tick function
+
 		TArray<APlanet*> Planets;
 		ACameraPawn* Camera;
 		APlanet* CurrentPlanet;
@@ -27,7 +29,12 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 			double BaseDistance = 1/(1.5E5);
 		UPROPERTY(EditAnywhere, Category = "Components")
 			double G = 1.179E-10;
-		int64 SecondsInSimulation = 86400;
+	
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit")
+		FVector CentralOrbitPoint = FVector(0.0f, 0.0f, 0.0f);
+
+//		int64 SecondsInSimulation = 86400;
+		int64 SecondsInSimulation = 16640000;
 		//int64 SecondsInSimulation = 166400;
 		float CurrentDeltaTime = 1/60;
 
@@ -35,4 +42,7 @@ class PRACAINZ_API APracaInzGameState : public AGameStateBase
 		//VR
 		APlanet* CurrentPlanetVR;
 		FVector CurrentPlanetVRScale;
+	
+		float TimeSinceStart = 0.0f;
+
 };

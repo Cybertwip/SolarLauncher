@@ -22,3 +22,12 @@ void APracaInzGameState::BeginPlay()
 		BaseDistance = 1 / (1E3);
 	}
 }
+
+
+void APracaInzGameState::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	// Update the total elapsed time since the start of the simulation
+	TimeSinceStart += DeltaSeconds;
+}

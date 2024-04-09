@@ -116,9 +116,9 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			BaseMassText->SetVisibility(ESlateVisibility::Visible);
 		}
 		if(FName(*GetWorld()->GetName()).IsEqual(FName("SolarSystem")))
-			BaseMassText->SetText(FText::FromString("Mass"));
+			BaseMassText->SetText(FText::FromString(""));
 		else
-			BaseMassText->SetText(FText::FromString("Mass"));
+			BaseMassText->SetText(FText::FromString(""));
 	}
 }
 	
