@@ -43,7 +43,7 @@ void APracaInzGameState::SelectNextPlanet()
 	int32 NextIndex = (Planets.IndexOfByKey(CurrentPlanet) + 1) % Planets.Num();
 	CurrentPlanet = Planets[NextIndex];
 	
-	CurrentPlanet->OnSelected(nullptr, FKey("Q"));
+	CurrentPlanet->OnSelected(nullptr, FKey("E"));
 }
 
 void APracaInzGameState::SelectPreviousPlanet()
@@ -54,7 +54,7 @@ void APracaInzGameState::SelectPreviousPlanet()
 	int32 PreviousIndex = (Planets.IndexOfByKey(CurrentPlanet) - 1 + Planets.Num()) % Planets.Num();
 	CurrentPlanet = Planets[PreviousIndex];
 	
-	CurrentPlanet->OnSelected(nullptr, FKey("E"));
+	CurrentPlanet->OnSelected(nullptr, FKey("Q"));
 
 }
 
