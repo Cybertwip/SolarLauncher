@@ -85,12 +85,39 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ACameraPawn::ZoomIn()
 {
-	CameraArm->TargetArmLength -= CameraArm->TargetArmLength / 10.0f;
+	
+	if(Camera){
+		Camera->FieldOfView -= Camera->FieldOfView / 10.0f;
+	}
+//	if(CameraArm->TargetArmLength>300){
+//		CameraArm->TargetArmLength -= CameraArm->TargetArmLength / 10;
+//	} else
+//	{
+//		if (Camera)
+//		{
+//			Camera->FieldOfView -= 1.0f; // Adjust FOV increment as needed
+//		}
+//		
+//	}
 }
 
 void ACameraPawn::ZoomOut()
 {
-	CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10.0f;
+//	if(CameraArm->TargetArmLength<60000){
+//		CameraArm->TargetArmLength += CameraArm->TargetArmLength / 10;
+//	} else {
+//		
+//		// Decrease FOV for zooming out
+//		if (Camera)
+//		{
+//			Camera->FieldOfView += 1.0f; // Adjust FOV decrement as needed
+//		}
+//	}
+	
+	if(Camera){
+		Camera->FieldOfView += Camera->FieldOfView / 10.0f;
+	}
+
 }
 
 void ACameraPawn::RotateY(float Value)
