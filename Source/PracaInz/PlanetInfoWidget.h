@@ -10,65 +10,65 @@
 #include "PlanetInfoWidget.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PRACAINZ_API UPlanetInfoWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 public:
 	UPlanetInfoWidget(const FObjectInitializer& ObjectInitializer);
-
-	virtual void NativeConstruct() override;				  
+	
+	virtual void NativeConstruct() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* PlanetTextInfo;
-
+	UTextBlock* PlanetTextInfo;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UEditableTextBox* PlanetMassTextBox;
-
+	UEditableTextBox* PlanetMassTextBox;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UEditableTextBox* SecondsTextBox;
-
+	USlider* SecondsSlider;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UEditableTextBox* VelocityTextBox;
-
-
+	UEditableTextBox* VelocityTextBox;
+	
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UEditableTextBox* InclinationTextBox;
-
+	UEditableTextBox* InclinationTextBox;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UButton* ResetButton;
-
+	UButton* ResetButton;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UButton* ExitButton;
+	UButton* ExitButton;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UButton* StopButton;
+	UButton* StopButton;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* StopButtonText;
-
+	UTextBlock* StopButtonText;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* BaseMassText;
+	UTextBlock* BaseMassText;
 	bool isStopped = false;
-
+	
 	void UpdatePlanetInfo(APlanet* Planet);
-
+	
 	UFUNCTION()
-		void OnCommittedPlanetMass();
-
+	void OnSliderValueChanged(float Value);
+	
 	UFUNCTION()
-		void OnCommittedTime() ;
-
+	void OnCommittedPlanetMass();
+	
 	UFUNCTION()
-		void OnCommittedVelocity() ;
-
+	void OnCommittedVelocity() ;
+	
 	UFUNCTION()
-		void OnCommittedInclination() ;
-
+	void OnCommittedInclination() ;
+	
 	UFUNCTION()
-		void OnReset();
+	void OnReset();
 	UFUNCTION()
-		void OnExit();
+	void OnExit();
 	UFUNCTION()
-		void OnStop();
+	void OnStop();
 };

@@ -20,8 +20,8 @@ void UPlanetInfoWidget::NativeConstruct()
 	PlanetMassTextBox->OnTextCommitted.Add(DelegateMass);
 
 	FScriptDelegate DelegateTime;
-	DelegateTime.BindUFunction(this, "OnCommittedTime");
-	SecondsTextBox->OnTextCommitted.Add(DelegateTime);
+	DelegateTime.BindUFunction(this, "OnSliderValueChanged");
+	SecondsSlider->OnValueChanged.Add(DelegateTime);
 
 	FScriptDelegate DelegateVelocity;
 	DelegateVelocity.BindUFunction(this, "OnCommittedVelocity");
@@ -77,15 +77,15 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 				 /PracaInzGameState->CurrentDeltaTime  /PracaInzGameState->BaseDistance))));
 		}
 	}
-	if (SecondsTextBox)
+	if (SecondsSlider)
 	{
-		if (SecondsTextBox->Visibility == ESlateVisibility::Hidden)
+		if (SecondsSlider->Visibility == ESlateVisibility::Hidden)
 		{
-			SecondsTextBox->SetVisibility(ESlateVisibility::Visible);
+			SecondsSlider->SetVisibility(ESlateVisibility::Visible);
 		}
 		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			SecondsTextBox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->SecondsInSimulation))));
+			SecondsSlider->SetValue(PracaInzGameState->SecondsInSimulation);
 		}
 	}
 	if (ResetButton)
@@ -143,12 +143,14 @@ void UPlanetInfoWidget::OnCommittedPlanetMass()
 	}
 }
 
-void UPlanetInfoWidget::OnCommittedTime() 
+void UPlanetInfoWidget::OnSliderValueChanged(float Value)
 {
+	// Assuming the slider value directly represents seconds in simulation,
+	// and you want to update the simulation time accordingly.
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
-		PracaInzGameState->SecondsInSimulation = FCString::Atoi64(*SecondsTextBox->GetText().ToString());
-		SecondsTextBox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->SecondsInSimulation))));
+		PracaInzGameState->SecondsInSimulation = Value;
+		// Optionally, update any UI elements or perform additional actions based on the new value
 	}
 }
 
