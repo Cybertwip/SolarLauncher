@@ -17,7 +17,7 @@ void APracaInzGameState::BeginPlay()
 	if (levelName == FName("SolarSystem"))
 	{
 		G = 1.179E-10;
-		BaseDistance = 1 / (1.5E5);
+		BaseDistance = (1.0 / 1000.0) * 149597870700;
 	}
 	else
 	{

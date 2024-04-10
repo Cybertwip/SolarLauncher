@@ -13,34 +13,34 @@ class PRACAINZ_API APlanet : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
 	// Sets default values for this actor's properties
 	APlanet();
-
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-
-public:	
+	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		UStaticMeshComponent* PlanetMesh;
+	UStaticMeshComponent* PlanetMesh;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		double PlanetMass;
+	double PlanetMass;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		FVector InitialVelocity;
+	FVector InitialVelocity;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		float RotationSpeed;
+	float RotationSpeed;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		float Diameter;
+	float Diameter;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		float Inclination;
+	float Inclination;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		FString Name;
+	FString Name;
 	UPROPERTY(EditAnywhere, Category = "Components")
-		FColor OrbitColor;
+	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
 	FVector a;
@@ -57,30 +57,32 @@ public:
 	
 	FInputActionBinding* inputActionBindingLeft;
 	FInputActionBinding* inputActionBindingRight;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Components")
-		UWidgetComponent* planetInfoWidget;
-
+	UWidgetComponent* planetInfoWidget;
+	
 	bool bIsBeingDestroyed = false;
 	// zmienna do sprawdzenia, czy wykonac pierwsze obliczenia
 	bool bFirstCalculations = true;
 	FTimerHandle DestroyTimer;
-
+	
 	UFUNCTION()
-		void OnSelected(AActor* Target, FKey ButtonPressed);
+	void OnSelected(AActor* Target, FKey ButtonPressed);
 	UFUNCTION()
-		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+						int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
-		void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
-			class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+					  class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	UFUNCTION(BluePrintCallable)
-		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
-
-
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
+	
+	
 	void UpdatePlanetPosition(float DeltaTime);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);
 	void OnTriggerPressed();
 	void OnXButtonPressed();
+	
+	int OrbitalPeriodDays;
 };

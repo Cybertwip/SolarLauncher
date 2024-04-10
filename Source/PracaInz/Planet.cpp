@@ -216,8 +216,12 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		FVector F = FVector(0, 0, 0);
 		double distance;
 		FVector oldLocation = GetActorLocation();
-		APlanet* centralPlanet = nullptr; // Variable to store the planet with the biggest gravity pull
 		
+		
+		APlanet* centralPlanet = nullptr; // Variable to store the planet with the biggest gravity pull
+
+		APlanet* star = nullptr; // Variable to store the planet with the biggest gravity pull
+
 		// Find the planet with the biggest mass (central anchor)
 		double maxMass = this->PlanetMass;
 		for (APlanet* x : PracaInzGameState->Planets)
@@ -229,11 +233,29 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 				break;
 			}
 		}
+		
+		for (APlanet* x : PracaInzGameState->Planets)
+		{
+			if (x->Name == "Sun")
+			{
+				star = x;
+				break;
+			}
+		}
+
 		if (centralPlanet == this || centralPlanet == nullptr)
 		{
 			return;
 		}
-
+		
+		const double G = 6.67430e-11 * 1.766;
+		const double earthMass = 5.972e24 * 1.766; // Mass of Earth in kilograms
+		
+		double G_scaled = G;
+		
+		const double centralPlanetMass = centralPlanet->PlanetMass * earthMass;
+		const double thisPlanetMass = PlanetMass * earthMass;
+		
 		// Calculate the distance vector to the central anchor
 		r = centralPlanet->GetActorLocation() - GetActorLocation();
 		
@@ -244,7 +266,7 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		F = (PlanetMass * centralPlanet->PlanetMass) / distance * r.GetSafeNormal();
 		
 		// Multiply the calculated force by the gravitational constant
-		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
+		F *= G_scaled * DeltaTime * DeltaTime;
 		
 		// Calculate the new momentum based on the current one and the time jump
 		FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
@@ -263,6 +285,40 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		float DeltaRotation = DeltaTime * RotationSpeed * PracaInzGameState->SecondsInSimulation;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
+		
+		if (star == this || star == nullptr)
+		{
+			return;
+		}
+		
+		auto starLocation = star->GetActorLocation();
+		auto planetLocation = GetActorLocation();
+		// Calculate the distance between the objects
+		FVector relativePosition = planetLocation - starLocation;
+		const double relativeDistance = relativePosition.Size();
+		// Calculate the elevation angle between spins to get the elliptical
+		const float inclinationAngle = FMath::RadiansToDegrees(FMath::Acos(relativePosition.Z / relativeDistance));
+		
+		// Apply Kepler's third law assuming circular orbit
+		// Convert inclination angle to radians
+		const float inclinationRadians = FMath::DegreesToRadians(Inclination);
+		
+		// Adjust orbital speed for elliptical orbit
+		const double orbitalSpeedElliptical = Velocity.Size() * FMath::Cos(inclinationRadians);
+		
+		// Calculate semi-major axis (assuming a circular orbit for simplicity)
+		const double timeScaled = PracaInzGameState->TimeSinceStart * PracaInzGameState->TimeSinceStart * PracaInzGameState->SecondsInSimulation;
+		
+		const double semiMajorAxis = (G_scaled * star->PlanetMass * timeScaled) / (4 * PI * PI);
+		
+		// Calculate semi-minor axis for elliptical orbit
+		const double semiMinorAxis = semiMajorAxis * FMath::Sin(inclinationRadians);
+		
+		// Calculate the orbital period for elliptical orbit using Kepler's third law
+		const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G_scaled * (star->PlanetMass + this->PlanetMass)));
+		
+		// Convert orbital period to days for elliptical orbit
+		OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
 		
 		// Draw debug line to visualize orbit
 		DrawDebugLine(GetWorld(), oldLocation, GetActorLocation(), OrbitColor, false, 3);

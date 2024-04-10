@@ -7,6 +7,7 @@
 #include "Planet.h"
 #include "Rocket.h"
 
+#include <string>
 
 UPlanetInfoWidget::UPlanetInfoWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -49,6 +50,15 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			PlanetTextInfo->SetVisibility(ESlateVisibility::Visible);
 		}	
 		PlanetTextInfo->SetText(FText::FromString("Object Name: " + Planet->Name));
+	}
+	if (PlanetDaysInfo)
+	{
+		if (PlanetDaysInfo->Visibility == ESlateVisibility::Hidden)
+		{
+			PlanetDaysInfo->SetVisibility(ESlateVisibility::Visible);
+		}
+		auto days = "Earth Days: " + std::to_string(Planet->OrbitalPeriodDays);
+		PlanetDaysInfo->SetText(FText::FromString(days.c_str()));
 	}
 	if (PlanetMassTextBox)
 	{
@@ -122,7 +132,6 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			BaseMassText->SetText(FText::FromString(""));
 	}
 }
-	
 
 void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 {

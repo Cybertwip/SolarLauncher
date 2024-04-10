@@ -120,7 +120,7 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	double distance;
 	FVector oldLocation = GetActorLocation();
 	APlanet* centralPlanet = nullptr; // Variable to store the planet with the biggest gravity pull
-
+	
 	double maxMass = this->RocketMass;
 	for (APlanet* x : GameState->Planets)
 	{
@@ -131,8 +131,7 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 			break;
 		}
 	}
-
-
+	
 	// Calculate the distance vector to the central anchor
 	r = centralPlanet->GetActorLocation() - GetActorLocation();
 	
@@ -144,7 +143,7 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	
 	FVector inclinationDirection = FVector(FMath::Cos(-0.032f), 0.0f, FMath::Sin(-0.032f)); // Assuming the inclination angle is 0.032 radians
 	forceDirection = FMath::Lerp(forceDirection, inclinationDirection, 0.5f); // Adjusting force direction based on inclination
-
+	
 	// Calculate the force acting on this planet from the central anchor
 	F = (RocketMass * centralPlanet->PlanetMass) / distance * forceDirection;
 	
@@ -165,22 +164,22 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	
 	// Update rotation
 	//FRotator NewRotation = GetActorRotation();
-//	float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
-//	NewRotation.Yaw += DeltaRotation;
-//	SetActorRotation(NewRotation);
+	//	float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
+	//	NewRotation.Yaw += DeltaRotation;
+	//	SetActorRotation(NewRotation);
 	
 	// Draw debug line to visualize orbit
 	DrawDebugLine(GetWorld(), oldLocation, GetActorLocation(), OrbitColor, false, 3);
-
 	
-//	// Apply thrust if thruster is active
-//	if (bIsThrusterActive)
-//	{
-//		FVector Thrust = GetActorForwardVector() * ThrustForce * GameState->BaseDistance;
-//		F += Thrust / RocketMass; // Thrust divided by rocket mass gives acceleration
-//	}
-//	
-//
+	
+	//	// Apply thrust if thruster is active
+	//	if (bIsThrusterActive)
+	//	{
+	//		FVector Thrust = GetActorForwardVector() * ThrustForce * GameState->BaseDistance;
+	//		F += Thrust / RocketMass; // Thrust divided by rocket mass gives acceleration
+	//	}
+	//
+	//
 }
 void ARocket::DestroyRocket()
 {
