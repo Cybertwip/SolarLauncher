@@ -54,6 +54,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Components")
 	FColor OrbitColor;
+	UPROPERTY(EditAnywhere, Category = "Components")
+	float Inclination;
 
 
 private:
@@ -62,6 +64,7 @@ private:
 	FVector p;
 	FVector startPosition;
 	bool bIsBeingDestroyed;
+	bool bFirstCalculations = true;
 	
 public:
 	// Called when rocket is selected
@@ -87,4 +90,7 @@ public:
 	
 	// Action binding function to toggle thruster
 	void ToggleThruster();
+	
+	void InitialCalculations(float DeltaTime);
+	
 };

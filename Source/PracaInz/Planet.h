@@ -43,7 +43,6 @@ public:
 	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
-	FVector a;
 	//do zmiany inklinacji
 	FVector startPosition;
 	FVector startVelocity;

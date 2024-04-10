@@ -353,7 +353,6 @@ void APlanet::InitialCalculations(float DeltaTime)
 			}
 		}
 		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
-		a = F / PlanetMass;
 	}
 }
 FRotator MyLookRotation(FVector forward, FVector upDirection)

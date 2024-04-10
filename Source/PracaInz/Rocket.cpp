@@ -18,12 +18,13 @@ ARocket::ARocket()
 	
 	// Create and set up the rocket mesh
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>("RocketMesh");
-	SetRootComponent(RocketMesh);
+	RocketMesh->SetAbsolute(true, true, true);
 	
 	// Set up rocket info widget
 	RocketInfoWidget = CreateDefaultSubobject<UWidgetComponent>("RocketInfoWidget");
-	RocketInfoWidget->SetupAttachment(RootComponent);
-	
+
+	SetRootComponent(RocketMesh);
+
 	// Initialize rocket properties
 	RocketMass = 1.f;
 	InitialVelocity = FVector::ZeroVector;
@@ -34,35 +35,46 @@ ARocket::ARocket()
 	// Set initial state
 	bIsThrusterActive = true; // Start with thruster active
 	
-	// Set rocket mesh
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> RocketMeshAsset(TEXT("/Game/Path/To/Your/RocketMesh"));
-	if (RocketMeshAsset.Succeeded())
-	{
-		RocketMesh->SetStaticMesh(RocketMeshAsset.Object);
-	}
 }
 
 // Called when the game starts or when spawned
 void ARocket::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// Set initial velocity
-	Velocity = InitialVelocity;
-	
-	// Calculate initial momentum
-	p = RocketMass * InitialVelocity;
-	
-	// Set initial position
-	startPosition = GetActorLocation();
-	
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		InitialVelocity *= PracaInzGameState->BaseDistance;
+		Velocity = InitialVelocity;
+	}
+	p = InitialVelocity * RocketMass;
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 	{
 		PracaInzGameModeBase->OnRocketCreate(this);
 	}
 	
+	RocketInfoWidget->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
+	RocketInfoWidget->SetHiddenInGame(true);
+	RocketInfoWidget->SetVisibility(false);
+
+	
 }
 
+void ARocket::InitialCalculations(float DeltaTime)
+{
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		FVector r;
+		FVector F = FVector(0, 0, 0);
+		double distance;
+		for (APlanet* x : PracaInzGameState->Planets)
+		{
+			r = x->GetActorLocation() - GetActorLocation();
+			distance = r.Size() * r.Size() * r.Size();
+			F += (((RocketMass) * (x->PlanetMass)) / (distance)) * r;
+		}
+		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
+	}
+}
 // Called every frame
 void ARocket::Tick(float DeltaTime)
 {
@@ -79,7 +91,35 @@ void ARocket::Tick(float DeltaTime)
 		//FireThruster();
 	}
 	
-	UpdateRocketPosition(DeltaTime);
+	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
+	{
+		if (!PracaInzGameModeBase->isEditMode)
+		{
+			if (bFirstCalculations)
+			{
+				bFirstCalculations = false;
+				p *= DeltaTime;
+				Velocity *= DeltaTime;
+				FVector position = GetActorLocation();
+				int degree = 0;
+				position = position.RotateAngleAxis(degree, FVector(0, 0, 1));
+				p = p.RotateAngleAxis(degree, FVector(0, 0, 1));
+				Velocity = Velocity.RotateAngleAxis(degree, FVector(0, 0, 1));
+				SetActorLocation(position);
+				InitialCalculations(DeltaTime);
+				startPosition = position;
+				FVector x;
+				if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+				{
+					x = GetActorLocation() - PracaInzGameState->Planets[0]->GetActorLocation();
+				}
+				x.Normalize();
+				p = p.RotateAngleAxis(Inclination, x);
+				Velocity = Velocity.RotateAngleAxis(Inclination, x);
+			}
+			UpdateRocketPosition(DeltaTime);
+		}
+	}
 }
 
 void ARocket::OnSelected(AActor* Target, FKey ButtonPressed)
@@ -106,11 +146,12 @@ void ARocket::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AAct
 {
 	bIsOverLapped = false;
 }
+
 void ARocket::UpdateRocketPosition(float DeltaTime)
 {
 	// Access the game state
-	APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
-	if (!GameState)
+	APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
+	if (!PracaInzGameState)
 	{
 		return; // Early return if GameState is not found
 	}
@@ -119,12 +160,17 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	FVector F = FVector(0, 0, 0);
 	double distance;
 	FVector oldLocation = GetActorLocation();
+	
+	
 	APlanet* centralPlanet = nullptr; // Variable to store the planet with the biggest gravity pull
 	
+	APlanet* star = nullptr; // Variable to store the planet with the biggest gravity pull
+	
+	// Find the planet with the biggest mass (central anchor)
 	double maxMass = this->RocketMass;
-	for (APlanet* x : GameState->Planets)
+	for (APlanet* x : PracaInzGameState->Planets)
 	{
-		if (x->PlanetMass > maxMass)
+		if (x->Name == "Sun")
 		{
 			maxMass = x->PlanetMass;
 			centralPlanet = x;
@@ -132,32 +178,52 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 		}
 	}
 	
+	for (APlanet* x : PracaInzGameState->Planets)
+	{
+		if (x->Name == "Sun")
+		{
+			star = x;
+			break;
+		}
+	}
+	
+	if (centralPlanet == nullptr)
+	{
+		return;
+	}
+	
+	const double G = 6.67430e-11 * 1.766;
+	const double earthMass = 5.972e24 * 1.766; // Mass of Earth in kilograms
+	
+	double G_scaled = G;
+	
 	// Calculate the distance vector to the central anchor
 	r = centralPlanet->GetActorLocation() - GetActorLocation();
 	
 	// Calculate the distance between this planet and the central anchor
 	distance = r.SizeSquared();
 	
-	// Calculate the force acting on the rocket from the planet
-	FVector forceDirection = r.GetSafeNormal();
-	
-	FVector inclinationDirection = FVector(FMath::Cos(-0.032f), 0.0f, FMath::Sin(-0.032f)); // Assuming the inclination angle is 0.032 radians
-	forceDirection = FMath::Lerp(forceDirection, inclinationDirection, 0.5f); // Adjusting force direction based on inclination
-	
 	// Calculate the force acting on this planet from the central anchor
-	F = (RocketMass * centralPlanet->PlanetMass) / distance * forceDirection;
+	F = (RocketMass * centralPlanet->PlanetMass) / distance * r.GetSafeNormal();
 	
+	float thrustAngle = -0.032f; // Assuming thrust angle is -0.032 radians
+	FVector thrustDirection = FVector(FMath::Cos(thrustAngle), 0.0f, 0.0f);
+	FVector thrust = thrustDirection; // Calculate thrust vector
+	
+	// Add thrust to the force vector
+	F += thrust * DeltaTime * DeltaTime;
+
 	// Multiply the calculated force by the gravitational constant
-	F *= GameState->G * DeltaTime * DeltaTime;
+	F *= G_scaled * DeltaTime * DeltaTime;
 	
 	// Calculate the new momentum based on the current one and the time jump
-	FVector New_p = p + (F * GameState->SecondsInSimulation);
+	FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
 	
 	// Calculate the new velocity
 	Velocity = New_p / RocketMass;
 	
 	// Calculate and set the planet in the new position based on the velocity and the time jump
-	SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
+	SetActorLocation(GetActorLocation() + (Velocity * PracaInzGameState->SecondsInSimulation));
 	
 	// Remember the newly calculated momentum
 	p = New_p;
