@@ -67,6 +67,10 @@ void APracaInzGameState::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to read Json file at: %s"), *FileName);
 	}
+	
+	Planets.Sort([](APlanet& A, APlanet& B) {
+		return A.PlanetMass < B.PlanetMass; // Ascending order
+	});
 }
 
 
