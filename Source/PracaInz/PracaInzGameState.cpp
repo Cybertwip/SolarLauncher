@@ -11,7 +11,7 @@ FVector CalculateInitialPosition(float Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
-	float GameWorldDistance = Distance * 1000.0f;
+	float GameWorldDistance = Distance;
 	return FVector(GameWorldDistance, 0.0f, 0.0f);
 }
 
@@ -125,7 +125,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("System node is missing the 'name' child node. Skipping system."));
 				continue; // Skip to the next system
 			}
 			
@@ -136,7 +135,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("System '%s' is missing the 'distance' child node. Skipping system."), *SystemName);
 				continue; // Skip to the next system
 			}
 			
@@ -153,7 +151,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					else
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Star node in system '%s' is missing the 'name' child node. Skipping star."), *SystemName);
 						continue; // Skip to the next star
 					}
 
@@ -164,7 +161,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					else
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Star '%s' in system '%s' is missing the 'mass' child node. Skipping star."), *StarName, *SystemName);
 						continue; // Skip to the next star
 					}
 					
@@ -177,7 +173,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					else
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Star '%s' in system '%s' is missing the 'radius' child node. Skipping star."), *StarName, *SystemName);
 						continue; // Skip to the next star
 					}
 					
