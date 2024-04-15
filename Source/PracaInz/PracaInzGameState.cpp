@@ -40,7 +40,6 @@ void APracaInzGameState::BeginPlay()
 	FString XmlData;
 	if (FFileHelper::LoadFileToString(XmlData, *FileName))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Read XML Data: %s"), *XmlData);
 		ProcessXmlData(XmlData);
 	}
 	else
@@ -118,44 +117,91 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 	FXmlFile XmlFile(XmlData, EConstructMethod::ConstructFromBuffer);
 	if (XmlFile.IsValid())
 	{
-		const FXmlNode* rootNode = XmlFile.GetRootNode(); // Assuming rootNode is "systems"
-		for (const FXmlNode* systemNode : rootNode->GetChildrenNodes()) // Iterate over each "system"
+		const FXmlNode* RootNode = XmlFile.GetRootNode(); // "systems" node
+		for (const FXmlNode* SystemNode : RootNode->GetChildrenNodes()) // Each "system"
 		{
-			FString SystemDistanceStr = systemNode->FindChildNode("distance") ? systemNode->FindChildNode("distance")->GetAttribute("value") : TEXT("");
-			float SystemDistance = FCString::Atof(*SystemDistanceStr);  // Convert to float using FCString::Atof
-			
-			if (SystemDistance <= 0) // Check for valid, positive distance
+			FString SystemName;
+			if (const FXmlNode* NameNode = SystemNode->FindChildNode("name"))
 			{
-				continue; // Skip systems with invalid or missing distance
+				SystemName = NameNode->GetContent();
 			}
-			UE_LOG(LogTemp, Log, TEXT("System Distance: %f parsecs"), SystemDistance);
-			
-			// Iterate over each "star" and "planet" similarly, ensuring you use valid distance
-			// The following is a conceptual example for iterating stars
-			for (const FXmlNode* starNode : systemNode->GetChildrenNodes())
+			else
 			{
-				if (starNode->GetTag() == "star")
+				UE_LOG(LogTemp, Warning, TEXT("System node is missing the 'name' child node. Skipping system."));
+				continue; // Skip to the next system
+			}
+			
+			FString DistanceStr;
+			if (const FXmlNode* DistanceNode = SystemNode->FindChildNode("distance"))
+			{
+				DistanceStr = DistanceNode->GetContent();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("System '%s' is missing the 'distance' child node. Skipping system."), *SystemName);
+				continue; // Skip to the next system
+			}
+			
+			float Distance = FCString::Atof(*DistanceStr);
+			
+			UE_LOG(LogTemp, Log, TEXT("System: %s, Distance: %f parsecs"), *SystemName, Distance);
+			
+			for (const FXmlNode* StarNode : SystemNode->GetChildrenNodes())
+			{
+				if (StarNode->GetTag() == "star")
 				{
-					FString StarName = starNode->GetAttribute("name");
-					float StarMass = FCString::Atof(*(starNode->FindChildNode("mass") ? starNode->FindChildNode("mass")->GetAttribute("value") : TEXT("0")));
-					float StarRadius = FCString::Atof(*(starNode->FindChildNode("radius") ? starNode->FindChildNode("radius")->GetAttribute("value") : TEXT("0")));
-					
-					if (StarMass > 0 && StarRadius > 0)
+					FString StarName;
+					if (const FXmlNode* NameNode = StarNode->FindChildNode("name"))
 					{
-						UE_LOG(LogTemp, Log, TEXT("Star: %s, Mass: %f, Radius: %f"),
-							   *StarName, StarMass, StarRadius);
-						
-						SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, SystemDistance);
+						StarName = NameNode->GetContent();
 					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Star node in system '%s' is missing the 'name' child node. Skipping star."), *SystemName);
+						continue; // Skip to the next star
+					}
+
+					FString StarMassStr;
+					if (const FXmlNode* MassNode = StarNode->FindChildNode("mass"))
+					{
+						StarMassStr = MassNode->GetContent();
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Star '%s' in system '%s' is missing the 'mass' child node. Skipping star."), *StarName, *SystemName);
+						continue; // Skip to the next star
+					}
+					
+					float StarMass = FCString::Atof(*StarMassStr);
+					
+					FString StarRadiusStr;
+					if (const FXmlNode* RadiusNode = StarNode->FindChildNode("radius"))
+					{
+						StarRadiusStr = RadiusNode->GetContent();
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Star '%s' in system '%s' is missing the 'radius' child node. Skipping star."), *StarName, *SystemName);
+						continue; // Skip to the next star
+					}
+					
+					float StarRadius = FCString::Atof(*StarRadiusStr);
+
+					
+					UE_LOG(LogTemp, Log, TEXT("Star: %s, Mass: %f, Radius: %f"), *StarName, StarMass, StarRadius);
+					
+					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
+					// Nested iteration for planets...
 				}
 			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to parse XML"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse XML data."));
 	}
 }
+
 
 void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float Distance)
 {
