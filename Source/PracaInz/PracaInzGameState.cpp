@@ -169,7 +169,8 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 					
 					float Density = 2500; // Assuming a density of 2500 kg/m³
 					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters
-					PlanetData.Mass = Volume * Density; // Mass in kilograms
+					const double EarthMassKg = 5.972e24; // Earth's mass in kilograms
+					PlanetData.Mass = (Volume * Density) / EarthMassKg; // Mass in Earth masses
 				}
 				else
 				{
@@ -194,7 +195,8 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 					float Mass = Volume * density; // Mass in kilograms
 					
 					PlanetData.Radius = Radius;
-					PlanetData.Mass = Mass;
+					const double EarthMassKg = 5.972e24; // Earth's mass in kilograms
+					PlanetData.Mass = Mass / EarthMassKg; // Mass in Earth masses
 
 				}
 				
@@ -341,7 +343,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->PlanetMass = PlanetData.Mass; // Convert mass to solar mass units
+		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(1)); // Assuming a uniform scale
