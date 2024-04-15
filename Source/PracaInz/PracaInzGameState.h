@@ -49,8 +49,7 @@ public:
 	//base distance = 100 000 km
 	UPROPERTY(EditAnywhere, Category = "Components")
 	double BaseDistance = 1/(1.5E5);
-	UPROPERTY(EditAnywhere, Category = "Components")
-	double G = 1.179E-10;
+	const double G = 6.67430e-11 * 1.766;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit")
 	FVector CentralOrbitPoint = FVector(0.0f, 0.0f, 0.0f);
@@ -74,4 +73,9 @@ private:
 	void ProcessXmlData(const FString& XmlData);
 	void SpawnPlanetFromJsonData(const FPlanetData& PlanetData);
 	void SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float distance);
+	
+	APlanet* earth = nullptr; // Variable to store the planet with the biggest gravity pull
+	
+	APlanet* star = nullptr; // Variable to store the planet with the biggest gravity pull
+
 };

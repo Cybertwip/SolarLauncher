@@ -111,17 +111,39 @@ void APlanet::Tick(float DeltaTime)
 	if (bFirstCalculations)
 	{
 		PerformInitialCalculations(DeltaTime, GameState);
+		
+//		UpdatePlanetPosition(DeltaTime, p);
 		bFirstCalculations = false;  // Ensure this block runs only once
 	}
 	
 	// Update planet position if it's not being destroyed
-	if (!bIsBeingDestroyed)
-	{
-		UpdatePlanetPosition(DeltaTime);
-	}
-	else
+	if (bIsBeingDestroyed)
 	{
 		DestroyPlanet();  // Handle planet destruction
+	} else {
+		
+		
+		FVector currentPosition = GetActorLocation();
+		
+		// Calculate the new momentum based on the current one and the time jump
+		FVector New_p = p + (PrecomputedForce * GameState->SecondsInSimulation);
+		
+		// Calculate the new velocity
+		Velocity = New_p / PlanetMass;
+		
+		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
+
+		// Remember the newly calculated momentum
+		p = New_p;
+		
+		// Optional: Update rotation based on new position if necessary
+		FRotator NewRotation = GetActorRotation();
+		float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
+		NewRotation.Yaw += DeltaRotation;
+		SetActorRotation(NewRotation);
+		
+		// Debugging: Draw a line from the old position to the new position
+		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), FColor::Green, false, 3);
 	}
 }
 
@@ -243,73 +265,11 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 //		}
 //	}
 //}
-void APlanet::UpdatePlanetPosition(float DeltaTime)
+void APlanet::UpdatePlanetPosition(float DeltaTime, FVector TotalForce)
 {
-	APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
-	if (!PracaInzGameState)
-	{
-		return; // Early exit if the cast fails or game state is not accessible
-	}
 	
-	FVector totalForce = FVector(0, 0, 0);
-	FVector currentPosition = GetActorLocation();
+	PrecomputedForce = TotalForce;
 	
-	const double G = 6.67430e-11 * 1.766;
-
-	// Iterate over all planets to calculate gravitational forces
-	for (APlanet* otherPlanet : PracaInzGameState->Planets)
-	{
-		if (otherPlanet == this)
-		{
-			continue; // Skip self in force calculations
-		}
-
-		FVector r = otherPlanet->GetActorLocation() - GetActorLocation();
-		
-		float distanceSquared = r.SizeSquared();
-		
-		if (distanceSquared < KINDA_SMALL_NUMBER) // Check to avoid division by zero
-		{
-			continue; // Skip this iteration to avoid infinite forces
-		}
-
-		// Calculate the force acting on this planet from the central anchor
-
-//		double distance = FMath::Sqrt(distanceSquared);
-//		FVector forceDirection = r / distance;
-//		double forceMagnitude = (G * PlanetMass * otherPlanet->PlanetMass) / distanceSquared;
-//		FVector gravitationalForce = forceDirection * forceMagnitude;
-		
-		FVector F = (PlanetMass * otherPlanet->PlanetMass) / distanceSquared * r.GetSafeNormal();
-
-		F *= G * DeltaTime * DeltaTime;
-
-		totalForce += F; // Accumulate forces from all planets
-	}
-	
-	// Calculate the force acting on this planet from the central anchor
-	FVector F = totalForce;
-		
-	// Calculate the new momentum based on the current one and the time jump
-	FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
-	
-	// Calculate the new velocity
-	Velocity = New_p / PlanetMass;
-	
-	// Calculate and set the planet in the new position based on the velocity and the time jump
-	SetActorLocation(GetActorLocation() + (Velocity * PracaInzGameState->SecondsInSimulation));
-	
-	// Remember the newly calculated momentum
-	p = New_p;
-	
-	// Optional: Update rotation based on new position if necessary
-	FRotator NewRotation = GetActorRotation();
-	float DeltaRotation = DeltaTime * RotationSpeed * PracaInzGameState->SecondsInSimulation;
-	NewRotation.Yaw += DeltaRotation;
-	SetActorRotation(NewRotation);
-
-	// Debugging: Draw a line from the old position to the new position
-	DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), FColor::Green, false, 3);
 }
 
 void APlanet::DestroyPlanet()

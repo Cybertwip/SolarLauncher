@@ -45,7 +45,7 @@ public:
 	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
-	
+	FVector PrecomputedForce;
 	
 	//VR
 	bool bIsBindedToPlayerInput = false;
@@ -71,7 +71,7 @@ public:
 	UFUNCTION(BluePrintCallable)
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
 
-	void UpdatePlanetPosition(float DeltaTime);
+	void UpdatePlanetPosition(float DeltaTime, FVector TotalForce);
 	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);

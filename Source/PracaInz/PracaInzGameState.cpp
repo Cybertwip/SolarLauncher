@@ -13,15 +13,15 @@ FVector CalculateInitialPositionParsecs(float Distance)
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
 	float GameWorldDistance = Distance * 206265; // Scaled parsecs
-	return FVector(2770 + GameWorldDistance / 3.0, -14390 + GameWorldDistance / 3.0, GameWorldDistance / 3.0);
+	return FVector(2770 + GameWorldDistance, -14390, 0.0);
 }
 
-FVector CalculateInitialPositionAU(float Distance)
-{
-	// Placeholder for a more complex calculation
+FVector CalculateInitialPositionAU(float Distance) {
 	// Example: Convert parsec distance to game world units, assuming 1 AU = 1000 units
-	float GameWorldDistance = Distance * 1000; // Scaled parsecs
-	return FVector(2770 + GameWorldDistance / 2.0, -14390 + GameWorldDistance / 2.0, 0.0f);
+	float GameWorldDistance = Distance * 1000; // Scaled AUs
+	
+	// Return the FVector with randomized position
+	return FVector(2770 + GameWorldDistance, -14390, 0.0);
 }
 }
 
@@ -35,12 +35,10 @@ void APracaInzGameState::BeginPlay()
 	FName levelName = FName(*GetWorld()->GetName());
 	if (levelName == FName("SolarSystem"))
 	{
-		G = 1.179E-10;
 		BaseDistance = (1.0 / 1000.0) * 149597870700;
 	}
 	else
 	{
-		G = 49.004E-7;
 		BaseDistance = 1 / (1E3);
 	}
 	
@@ -65,20 +63,108 @@ void APracaInzGameState::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("Failed to read XML file at: %s"), *FileName);
 	}
 	
-	
-	
 	Planets.Sort([](APlanet& A, APlanet& B) {
 		return A.PlanetMass < B.PlanetMass; // Ascending order
 	});
+	
+	for (APlanet* planet : Planets)
+	{
+		if(planet->Name == "Sun"){
+			star = planet;
+		}
+		
+		if(planet->Name == "Earth"){
+			earth = planet;
+		}
+		
+		if(star && earth){
+			break;
+		}
+	}
 }
 
-
-void APracaInzGameState::Tick(float DeltaSeconds)
+void APracaInzGameState::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaSeconds);
+	Super::Tick(DeltaTime);
 	
 	// Update the total elapsed time since the start of the simulation
-	TimeSinceStart += DeltaSeconds;
+	TimeSinceStart += DeltaTime;
+	
+	TMap<APlanet*, FVector> PlanetForces;
+	for (APlanet* planet : Planets)
+	{
+		PlanetForces.Add(planet, FVector(0, 0, 0));
+	}
+	
+	// Calculate gravitational forces between all pairs of planets
+	for (APlanet* planet : Planets)
+	{
+		for (APlanet* otherPlanet : Planets)
+		{
+			if (planet == otherPlanet) continue;
+
+			FVector r = otherPlanet->GetActorLocation() - planet->GetActorLocation();
+			
+			float distanceSquared = r.SizeSquared();
+			
+			if (distanceSquared < KINDA_SMALL_NUMBER) // Check to avoid division by zero
+			{
+				continue; // Skip this iteration to avoid infinite forces
+			}
+			
+			FVector F = (planet->PlanetMass * otherPlanet->PlanetMass) / distanceSquared * r.GetSafeNormal();
+			
+			F *= G * DeltaTime * DeltaTime;
+			
+			PlanetForces[planet] += F;
+		}
+	}
+	
+	for (APlanet* planet : Planets)
+	{
+		planet->UpdatePlanetPosition(DeltaTime, PlanetForces[planet]);
+	}
+
+	
+	if (earth == nullptr || star == nullptr)
+	{
+		return;
+	}
+	
+//	const double G = 6.67430e-11 * 1.766;
+
+	auto starLocation = star->GetActorLocation();
+	auto planetLocation = earth->GetActorLocation();
+	// Calculate the distance between the objects
+	FVector relativePosition = planetLocation - starLocation;
+	const double relativeDistance = relativePosition.Size();
+	// Calculate the elevation angle between spins to get the elliptical
+	const float inclinationAngle = FMath::RadiansToDegrees(FMath::Acos(relativePosition.Z / relativeDistance));
+	
+	// Apply Kepler's third law assuming circular orbit
+	// Convert inclination angle to radians
+	const float inclinationRadians = FMath::DegreesToRadians(earth->Inclination);
+	
+	// Adjust orbital speed for elliptical orbit
+	const double orbitalSpeedElliptical = earth->Velocity.Size() * FMath::Cos(inclinationRadians);
+	
+	// Calculate semi-major axis (assuming a circular orbit for simplicity)
+	const double timeScaled = TimeSinceStart * TimeSinceStart * SecondsInSimulation;
+	
+	const double semiMajorAxis = (G * star->PlanetMass * timeScaled) / (4 * PI * PI);
+	
+	// Calculate semi-minor axis for elliptical orbit
+	const double semiMinorAxis = semiMajorAxis * FMath::Sin(inclinationRadians);
+	
+	// Calculate the orbital period for elliptical orbit using Kepler's third law
+	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->PlanetMass + earth->PlanetMass)));
+	
+	// Convert orbital period to days for elliptical orbit
+	earth->OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
+	
+	if (earth->OrbitalPeriodDays > 365) {
+		earth->OrbitalPeriodDays = fmod(earth->OrbitalPeriodDays, 365.0); // Reset the day count when it exceeds 365
+	}
 }
 
 void APracaInzGameState::SelectNextPlanet()
@@ -172,19 +258,17 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		{
 			// Calculate Diameter and Mass based on H
 			const float TypicalAlbedo = 0.15;
-			double Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
+			double Diameter = std::pow(10, (3.123 - H / 5));
+
 			PlanetData.Radius = Diameter / 2.0;  // Radius in kilometers, convert to Earth radii later
-			
-			PlanetData.Radius /= 6371.0;
-			
+						
 			// Assuming density for mass calculation
 			double Density = 2500;  // kg/m³, assuming a rocky composition
 			double Volume = (4.0 / 3.0) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius from km to meters
-			PlanetData.Mass = (Volume * Density);
+			PlanetData.Mass = (Volume * Density) / 5.9722e24;
 			
-			if(PlanetData.Mass < KINDA_SMALL_NUMBER){
-				continue;
-			}
+			PlanetData.Radius /= 6371.0;
+
 		}
 		else
 		{
@@ -193,7 +277,7 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		}
 		
 		// Check capacity to avoid exceeding limits
-		if (Planets.Num() >= 500)
+		if (Planets.Num() >= 800)
 		{
 			break;  // Stop processing if too many planets
 		}
@@ -273,7 +357,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 					
-					if (Planets.Num() >= 1000)
+					if (Planets.Num() >= 1600)
 					{
 						break;  // Stop processing if too many planets
 					}
@@ -333,7 +417,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(0.01)); // Assuming a uniform scale
-		NewPlanet->Inclination = FMath::RandRange(0.0f, 180.0f);
+		NewPlanet->Inclination = FMath::RandRange(0.0f, M_PI * 2);
 		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
 	}
 }
