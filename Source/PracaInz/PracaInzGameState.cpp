@@ -207,7 +207,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->PlanetMass = Mass;
+		NewPlanet->PlanetMass = Mass * 332886.8125; // Sun mass
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
