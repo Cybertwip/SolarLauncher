@@ -11,7 +11,7 @@ FVector CalculateInitialPosition(float Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
-	float GameWorldDistance = Distance;
+	float GameWorldDistance = Distance * 206.265;
 	return FVector(GameWorldDistance, 0.0f, 0.0f);
 }
 
@@ -179,7 +179,8 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
-					// Nested iteration for planets...
+
+					return;
 				}
 			}
 		}
@@ -212,6 +213,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
+		NewPlanet->SetActorScale3D(FVector(1));
 		// Set other properties as needed
 	}
 }

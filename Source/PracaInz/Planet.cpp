@@ -26,6 +26,30 @@ APlanet::APlanet()
 	OnClicked.AddUniqueDynamic(this, &APlanet::OnSelected);
 	
 	SetRootComponent(PlanetMesh);
+	
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshAsset(TEXT("/Engine/BasicShapes/Sphere"));
+	if (SphereMeshAsset.Succeeded())
+	{
+		// Set the mesh for the PlanetMesh component
+		PlanetMesh->SetStaticMesh(SphereMeshAsset.Object);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load default sphere mesh for PlanetMesh."));
+	}
+	
+	// Load and apply the Sun material
+	static ConstructorHelpers::FObjectFinder<UMaterial> SunMaterialAsset(TEXT("/Game/SolarSystem/Materials/Sun"));
+	if (SunMaterialAsset.Succeeded())
+	{
+		// Set the material for the PlanetMesh component
+		PlanetMesh->SetMaterial(0, SunMaterialAsset.Object);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load Sun material for PlanetMesh."));
+	}
+
 	InitialVelocity.X = 0.f;
 	InitialVelocity.Y = 0.f;
 	InitialVelocity.Z = 0.f;
