@@ -57,7 +57,7 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		{
 			PlanetDaysInfo->SetVisibility(ESlateVisibility::Visible);
 		}
-		auto days = "Earth Days: " + std::to_string(Planet->OrbitalPeriodDays);
+		auto days = std::to_string(Planet->OrbitalPeriodDays);
 		PlanetDaysInfo->SetText(FText::FromString(days.c_str()));
 	}
 	if (PlanetMassTextBox)
