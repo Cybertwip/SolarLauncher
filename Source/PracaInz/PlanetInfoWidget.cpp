@@ -281,10 +281,7 @@ void UPlanetInfoWidget::OnCommittedInclination()
 			return;
 		float oldInclination = Planet->Inclination;
 		Planet->Inclination = FCString::Atof(*InclinationTextBox->GetText().ToString());
-		Planet->p = Planet->startP;
-		Planet->Velocity = Planet->startVelocity;
-		Planet->SetActorLocation(Planet->startPosition);
-		FVector R = Planet->startPosition - PracaInzGameState->Planets[0]->GetActorLocation();
+		FVector R = PracaInzGameState->Planets[0]->GetActorLocation();
 		if (R.Normalize())
 		{
 		

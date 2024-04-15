@@ -8,6 +8,8 @@
 #include "Components/WidgetComponent.h"
 #include "Planet.generated.h"
 
+class APracaInzGameState;
+
 UCLASS()
 class PRACAINZ_API APlanet : public AActor
 {
@@ -43,10 +45,6 @@ public:
 	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
-	//do zmiany inklinacji
-	FVector startPosition;
-	FVector startVelocity;
-	FVector startP;
 	
 	
 	//VR
@@ -64,17 +62,17 @@ public:
 	
 	UFUNCTION()
 	void OnSelected(AActor* Target, FKey ButtonPressed);
-	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-						int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
-					  class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+//	UFUNCTION()
+//	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+//						int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+//	UFUNCTION()
+//	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+//					  class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	UFUNCTION(BluePrintCallable)
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
-	
-	
+
 	void UpdatePlanetPosition(float DeltaTime);
+	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);
 	void OnTriggerPressed();

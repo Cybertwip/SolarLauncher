@@ -66,8 +66,8 @@ void APlanet::BeginPlay()
 	Super::BeginPlay();
 
 
-	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
-	PlanetMesh->OnComponentEndOverlap.AddDynamic(this, &APlanet::OnOverlapEnd);
+//	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
+//	PlanetMesh->OnComponentEndOverlap.AddDynamic(this, &APlanet::OnOverlapEnd);
 	PlanetMesh->OnComponentHit.AddUniqueDynamic(this, &APlanet::OnHit);
 	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
 
@@ -88,47 +88,63 @@ void APlanet::BeginPlay()
 // Called every frame
 void APlanet::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
+	Super::Tick(DeltaTime);  // Always call the base class tick
+	
+	// Obtain the game mode and check if we are in edit mode
+	APracaInzGameModeBase* GameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode());
+	if (!GameModeBase || GameModeBase->isEditMode)
 	{
-		if (!PracaInzGameModeBase->isEditMode)
-		{
-			if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-			{
-				PracaInzGameState->CurrentDeltaTime = DeltaTime;
-			}
-			if (bFirstCalculations)
-			{
-				bFirstCalculations = false;
-				p *= DeltaTime;
-				Velocity *= DeltaTime;
-				FVector position = GetActorLocation();
-				int degree = 0;
-				position = position.RotateAngleAxis(degree, FVector(0, 0, 1));
-				p = p.RotateAngleAxis(degree, FVector(0, 0, 1));
-				Velocity = Velocity.RotateAngleAxis(degree, FVector(0, 0, 1));
-				SetActorLocation(position);
-				InitialCalculations(DeltaTime);
-				startPosition = position;
-				startP = p;
-				startVelocity = Velocity;
-				FVector x;
-				if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-				{
-					x = GetActorLocation() - PracaInzGameState->Planets[0]->GetActorLocation();
-				}
-				x.Normalize();
-				p = p.RotateAngleAxis(Inclination, x);
-				Velocity = Velocity.RotateAngleAxis(Inclination, x);
-			}
-			if (bIsBeingDestroyed)
-			{
-				DestroyPlanet();
-			}
-			UpdatePlanetPosition(DeltaTime);
-		}
+		return;  // Skip processing if we are in edit mode or game mode is not available
+	}
+	
+	// Access the game state
+	APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
+	if (!GameState)
+	{
+		return;  // Early exit if game state is not accessible
+	}
+	
+	// Set current delta time in game state
+	GameState->CurrentDeltaTime = DeltaTime;
+	
+	// Perform first-time calculations
+	if (bFirstCalculations)
+	{
+		PerformInitialCalculations(DeltaTime, GameState);
+		bFirstCalculations = false;  // Ensure this block runs only once
+	}
+	
+	// Update planet position if it's not being destroyed
+	if (!bIsBeingDestroyed)
+	{
+		UpdatePlanetPosition(DeltaTime);
+	}
+	else
+	{
+		DestroyPlanet();  // Handle planet destruction
 	}
 }
+
+void APlanet::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
+{
+	FVector currentPosition = GetActorLocation();
+	FVector referenceDirection = FVector(0, 0, 1);  // Typically the 'up' direction in UE
+	
+	// Apply initial transformations and calculations
+	currentPosition = currentPosition.RotateAngleAxis(0, referenceDirection);  // Rotate by 0 degrees, consider dynamic rotation later
+	p *= DeltaTime;
+	Velocity *= DeltaTime;
+	p = p.RotateAngleAxis(0, referenceDirection);
+	Velocity = Velocity.RotateAngleAxis(0, referenceDirection);
+	SetActorLocation(currentPosition);
+	
+	// Calculate inclination effects
+	FVector relativeDirection = (GameState->Planets.Num() > 0) ? (currentPosition - GameState->Planets[0]->GetActorLocation()) : FVector::UpVector;
+	relativeDirection.Normalize();
+	p = p.RotateAngleAxis(Inclination, relativeDirection);
+	Velocity = Velocity.RotateAngleAxis(Inclination, relativeDirection);
+}
+
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 {
@@ -143,90 +159,90 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 		PracaInzGameState->Camera->bOnChangePlanet = true;
 	}
 }
-
-void APlanet::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	bIsBindedToPlayerInput = false;
-	bIsOverLapped = false;
-	if(inputActionBindingLeft)
-		InputComponent->RemoveActionBindingForHandle(inputActionBindingLeft->GetHandle());
-	if (inputActionBindingRight)
-		InputComponent->RemoveActionBindingForHandle(inputActionBindingRight->GetHandle());
-	/*if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Yellow, TEXT("Overlap end"));*/
-}
-
-void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
-	{
-		if (OtherActor->ActorHasTag("VR") && PracaInzGameModeBase->isEditMode)
-		{
-			bIsOverLapped = true;
-			//if (GEngine)
-			//	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("Hello %s"), *OtherActor->GetActorLabel()));
-
-			if (!bIsBindedToPlayerInput)
-			{
-				bIsBindedToPlayerInput = true;
-				EnableInput(GetWorld()->GetFirstPlayerController());
-				if (InputComponent)
-				{
-					// Use BindAction or BindAxis on the InputComponent to establish the bindings
-					inputActionBindingLeft = &InputComponent->BindAction(FName("TriggerLeft"), IE_Pressed, this, &APlanet::OnTriggerPressed);
-					inputActionBindingRight = &InputComponent->BindAction(FName("TriggerRight"), IE_Pressed, this, &APlanet::OnTriggerPressed);
-				}
-			}
-			//PlanetMesh->SetRenderCustomDepth(true); // - for glow effect
-		}
-	}
-	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-	{
-		if (APlanet* Planet = Cast<APlanet>(OtherActor))
-		{
-			/*...*/
-			if (Planet->PlanetMass > PlanetMass)
-			{
-				if(PracaInzGameState->CurrentPlanet==this)
-				{ 
-					PracaInzGameState->Camera->Focused = Cast<USceneComponent>(Planet->PlanetMesh);
-					PracaInzGameState->CurrentPlanet = Planet;
-					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
-					{
-						PracaInzHUD->UpdatePlanetInfo(Planet);
-					}
-					PracaInzGameState->Camera->bOnChangePlanet = true;
-				}
-				PracaInzGameState->Planets.Remove(this);
-				bIsBeingDestroyed = true;
-			}
-			/*...*/
-			else if(Planet->PlanetMass < PlanetMass)
-			{
-				p += Planet->p;
-				double mass = PlanetMass + Planet->PlanetMass;
-				for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
-				{
-					APlanet* x = PracaInzGameState->Planets[i];
-					if (fabs(x->PlanetMass - mass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
-					{
-						mass = mass + 0.0001;
-						i = -1;
-					}
-				}
-				PlanetMass = mass;
-				if (PracaInzGameState->CurrentPlanet == this)
-				{
-					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
-					{
-						PracaInzHUD->UpdatePlanetInfo(this);
-					}
-				}
-			}
-		}
-	}
-}
+//
+//void APlanet::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+//{
+//	bIsBindedToPlayerInput = false;
+//	bIsOverLapped = false;
+//	if(inputActionBindingLeft)
+//		InputComponent->RemoveActionBindingForHandle(inputActionBindingLeft->GetHandle());
+//	if (inputActionBindingRight)
+//		InputComponent->RemoveActionBindingForHandle(inputActionBindingRight->GetHandle());
+//	/*if (GEngine)
+//		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Yellow, TEXT("Overlap end"));*/
+//}
+//
+//void APlanet::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+//	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
+//	{
+//		if (OtherActor->ActorHasTag("VR") && PracaInzGameModeBase->isEditMode)
+//		{
+//			bIsOverLapped = true;
+//			//if (GEngine)
+//			//	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("Hello %s"), *OtherActor->GetActorLabel()));
+//
+//			if (!bIsBindedToPlayerInput)
+//			{
+//				bIsBindedToPlayerInput = true;
+//				EnableInput(GetWorld()->GetFirstPlayerController());
+//				if (InputComponent)
+//				{
+//					// Use BindAction or BindAxis on the InputComponent to establish the bindings
+//					inputActionBindingLeft = &InputComponent->BindAction(FName("TriggerLeft"), IE_Pressed, this, &APlanet::OnTriggerPressed);
+//					inputActionBindingRight = &InputComponent->BindAction(FName("TriggerRight"), IE_Pressed, this, &APlanet::OnTriggerPressed);
+//				}
+//			}
+//			//PlanetMesh->SetRenderCustomDepth(true); // - for glow effect
+//		}
+//	}
+//	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+//	{
+//		if (APlanet* Planet = Cast<APlanet>(OtherActor))
+//		{
+//			/*...*/
+//			if (Planet->PlanetMass > PlanetMass)
+//			{
+//				if(PracaInzGameState->CurrentPlanet==this)
+//				{ 
+//					PracaInzGameState->Camera->Focused = Cast<USceneComponent>(Planet->PlanetMesh);
+//					PracaInzGameState->CurrentPlanet = Planet;
+//					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+//					{
+//						PracaInzHUD->UpdatePlanetInfo(Planet);
+//					}
+//					PracaInzGameState->Camera->bOnChangePlanet = true;
+//				}
+//				PracaInzGameState->Planets.Remove(this);
+//				bIsBeingDestroyed = true;
+//			}
+//			/*...*/
+//			else if(Planet->PlanetMass < PlanetMass)
+//			{
+//				p += Planet->p;
+//				double mass = PlanetMass + Planet->PlanetMass;
+//				for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
+//				{
+//					APlanet* x = PracaInzGameState->Planets[i];
+//					if (fabs(x->PlanetMass - mass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
+//					{
+//						mass = mass + 0.0001;
+//						i = -1;
+//					}
+//				}
+//				PlanetMass = mass;
+//				if (PracaInzGameState->CurrentPlanet == this)
+//				{
+//					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+//					{
+//						PracaInzHUD->UpdatePlanetInfo(this);
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
 void APlanet::UpdatePlanetPosition(float DeltaTime)
 {
 	APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
@@ -239,8 +255,7 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 	FVector currentPosition = GetActorLocation();
 	
 	const double G = 6.67430e-11 * 1.766;
-	const double earthMass = 5.972e24 * 1.766; // Mass of Earth in kilograms
-		
+
 	// Iterate over all planets to calculate gravitational forces
 	for (APlanet* otherPlanet : PracaInzGameState->Planets)
 	{
@@ -248,36 +263,35 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		{
 			continue; // Skip self in force calculations
 		}
+
+		FVector r = otherPlanet->GetActorLocation() - GetActorLocation();
 		
-		FVector direction = otherPlanet->GetActorLocation() - currentPosition;
-		double distanceSquared = direction.SizeSquared();
+		float distanceSquared = r.SizeSquared();
 		
 		if (distanceSquared < KINDA_SMALL_NUMBER) // Check to avoid division by zero
 		{
 			continue; // Skip this iteration to avoid infinite forces
 		}
-		
-		double distance = FMath::Sqrt(distanceSquared);
-		FVector normalizedDirection = direction / distance; // Normalize vector
-		
-		FVector F = FVector(0, 0, 0);
 
-		F = (PlanetMass * otherPlanet->PlanetMass) / distanceSquared * normalizedDirection;
-		
-		// Multiply the calculated force by the gravitational constant
-		F *= G * DeltaTime * DeltaTime;
-//		// Calculate gravitational force magnitude
+		// Calculate the force acting on this planet from the central anchor
+
+//		double distance = FMath::Sqrt(distanceSquared);
+//		FVector forceDirection = r / distance;
 //		double forceMagnitude = (G * PlanetMass * otherPlanet->PlanetMass) / distanceSquared;
-//		FVector force = normalizedDirection * forceMagnitude;
+//		FVector gravitationalForce = forceDirection * forceMagnitude;
 		
+		FVector F = (PlanetMass * otherPlanet->PlanetMass) / distanceSquared * r.GetSafeNormal();
+
+		F *= G * DeltaTime * DeltaTime;
+
 		totalForce += F; // Accumulate forces from all planets
 	}
 	
-	// Calculate acceleration
-	FVector acceleration = totalForce / PlanetMass;
-	
-	// Update velocity and position
-	FVector New_p = p + (totalForce * PracaInzGameState->SecondsInSimulation);
+	// Calculate the force acting on this planet from the central anchor
+	FVector F = totalForce;
+		
+	// Calculate the new momentum based on the current one and the time jump
+	FVector New_p = p + (F * PracaInzGameState->SecondsInSimulation);
 	
 	// Calculate the new velocity
 	Velocity = New_p / PlanetMass;
@@ -295,9 +309,7 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 	SetActorRotation(NewRotation);
 
 	// Debugging: Draw a line from the old position to the new position
-	
 	DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), FColor::Green, false, 3);
-
 }
 
 void APlanet::DestroyPlanet()

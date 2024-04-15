@@ -12,8 +12,8 @@ FVector CalculateInitialPositionParsecs(float Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
-	float GameWorldDistance = Distance * 47194.78; // Scaled parsecs
-	return FVector(GameWorldDistance + 2770, -14390, 0.0f);
+	float GameWorldDistance = Distance * 206265; // Scaled parsecs
+	return FVector(2770 + GameWorldDistance / 3.0, -14390 + GameWorldDistance / 3.0, GameWorldDistance / 3.0);
 }
 
 FVector CalculateInitialPositionAU(float Distance)
@@ -21,7 +21,7 @@ FVector CalculateInitialPositionAU(float Distance)
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 AU = 1000 units
 	float GameWorldDistance = Distance * 1000; // Scaled parsecs
-	return FVector(GameWorldDistance + 2770, -14390, 0.0f);
+	return FVector(2770 + GameWorldDistance / 2.0, -14390 + GameWorldDistance / 2.0, 0.0f);
 }
 }
 
@@ -44,18 +44,7 @@ void APracaInzGameState::BeginPlay()
 		BaseDistance = 1 / (1E3);
 	}
 	
-	FString FileName = FPaths::ProjectContentDir() + TEXT("Data/systems.xml");
-	FString XmlData;
-	if (FFileHelper::LoadFileToString(XmlData, *FileName))
-	{
-		//ProcessXmlData(XmlData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to read XML file at: %s"), *FileName);
-	}
-	
-	FileName = FPaths::ProjectContentDir() + TEXT("Data/nea_extended.json");
+	FString FileName = FPaths::ProjectContentDir() + TEXT("Data/nea_extended.json");
 	FString JsonData;
 	if (FFileHelper::LoadFileToString(JsonData, *FileName))
 	{
@@ -65,6 +54,18 @@ void APracaInzGameState::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to read Json file at: %s"), *FileName);
 	}
+	FileName = FPaths::ProjectContentDir() + TEXT("Data/systems.xml");
+	FString XmlData;
+	if (FFileHelper::LoadFileToString(XmlData, *FileName))
+	{
+		ProcessXmlData(XmlData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to read XML file at: %s"), *FileName);
+	}
+	
+	
 	
 	Planets.Sort([](APlanet& A, APlanet& B) {
 		return A.PlanetMass < B.PlanetMass; // Ascending order
@@ -174,12 +175,14 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 			double Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
 			PlanetData.Radius = Diameter / 2.0;  // Radius in kilometers, convert to Earth radii later
 			
+			PlanetData.Radius /= 6371.0;
+			
 			// Assuming density for mass calculation
 			double Density = 2500;  // kg/m³, assuming a rocky composition
 			double Volume = (4.0 / 3.0) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius from km to meters
-			PlanetData.Mass = Volume * Density / 5.972e24; // Convert kg to Earth masses
+			PlanetData.Mass = (Volume * Density);
 			
-			if(PlanetData.Mass == 0){
+			if(PlanetData.Mass < KINDA_SMALL_NUMBER){
 				continue;
 			}
 		}
@@ -190,7 +193,7 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		}
 		
 		// Check capacity to avoid exceeding limits
-		if (Planets.Num() >= 1000)
+		if (Planets.Num() >= 500)
 		{
 			break;  // Stop processing if too many planets
 		}
@@ -270,8 +273,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 					
-					// Check capacity to avoid exceeding limits
-					if (Planets.Num() >= 500)
+					if (Planets.Num() >= 1000)
 					{
 						break;  // Stop processing if too many planets
 					}
@@ -330,8 +332,8 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
-		NewPlanet->SetActorScale3D(FVector(1)); // Assuming a uniform scale
-		NewPlanet->Inclination = 0.0f;
+		NewPlanet->SetActorScale3D(FVector(0.01)); // Assuming a uniform scale
+		NewPlanet->Inclination = FMath::RandRange(0.0f, 180.0f);
 		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
 	}
 }
