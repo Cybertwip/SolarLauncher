@@ -39,7 +39,7 @@ APlanet::APlanet()
 	}
 	
 	// Load and apply the Sun material
-	static ConstructorHelpers::FObjectFinder<UMaterial> SunMaterialAsset(TEXT("/Game/SolarSystem/Materials/Sun"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstance> SunMaterialAsset(TEXT("/Game/SolarSystem/Materials/Sun"));
 	if (SunMaterialAsset.Succeeded())
 	{
 		// Set the material for the PlanetMesh component
