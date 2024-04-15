@@ -101,8 +101,6 @@ void APracaInzGameState::OnHttpResponseReceived(FHttpRequestPtr Request, FHttpRe
 	{
 		FString XmlData = FString(UTF8_TO_TCHAR(Response->GetContent().GetData()));
 
-		UE_LOG(LogTemp, Log, TEXT("Received XML Data: %s"), *XmlData);
-
 		// Here you should add the code to decompress if dealing with GZIP
 		ProcessXmlData(Response->GetContentAsString());
 	}
