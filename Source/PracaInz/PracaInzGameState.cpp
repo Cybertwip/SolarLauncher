@@ -11,7 +11,7 @@ FVector CalculateInitialPosition(float Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
-	float GameWorldDistance = Distance * 206265;
+	float GameWorldDistance = Distance * 47194.78; // Scaled parsecs
 	return FVector(GameWorldDistance, 0.0f, 0.0f);
 }
 
