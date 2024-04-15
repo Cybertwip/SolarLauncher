@@ -8,13 +8,22 @@
 #include "Kismet/GameplayStatics.h"
 
 namespace {
-FVector CalculateInitialPosition(float Distance)
+FVector CalculateInitialPositionParsecs(float Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
 	float GameWorldDistance = Distance * 47194.78; // Scaled parsecs
 	return FVector(GameWorldDistance, 0.0f, 0.0f);
 }
+
+FVector CalculateInitialPositionAU(float Distance)
+{
+	// Placeholder for a more complex calculation
+	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
+	float GameWorldDistance = Distance * 1000; // Scaled parsecs
+	return FVector(GameWorldDistance, 0.0f, 0.0f);
+}
+
 
 }
 
@@ -251,7 +260,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 	SpawnParams.Instigator = GetInstigator();
 	
 	// Calculate initial position and other dynamics as needed
-	FVector InitialPosition = CalculateInitialPosition(Distance); // Modify this method to use distance
+	FVector InitialPosition = CalculateInitialPositionParsecs(Distance); // Modify this method to use distance
 	
 	// Spawn the planet actor
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
@@ -270,7 +279,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
 	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
-	FVector InitialPosition = CalculateInitialPosition(PlanetData.Distance); // Calculate initial position based on distance
+	FVector InitialPosition = CalculateInitialPositionAU(PlanetData.Distance); // Calculate initial position based on distance
 	
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
