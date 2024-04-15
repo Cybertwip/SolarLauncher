@@ -244,43 +244,24 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 
 		// Find the planet with the biggest mass (central anchor)
 		double maxMass = this->PlanetMass;
-		
-		// Find the index of the first planet with mass greater than maxMass
-		int32 Index = PracaInzGameState->Planets.Find(this);
-
-		// Check if we actually found a valid index and if there is a next planet
-		if (Index != INDEX_NONE && Index + 1 < PracaInzGameState->Planets.Num())
+		for (APlanet* x : PracaInzGameState->Planets)
 		{
-			APlanet* NextPlanet = PracaInzGameState->Planets[Index + 1];
-			
-			maxMass = NextPlanet->PlanetMass;
-			
-			centralPlanet = NextPlanet;
+			if (x->PlanetMass > maxMass)
+			{
+				maxMass = x->PlanetMass;
+				centralPlanet = x;
+				break;
+			}
 		}
-		else
-		{
-			maxMass = this->PlanetMass;
-			centralPlanet = this;
-		}
-
-//		for (APlanet* x : PracaInzGameState->Planets)
-//		{
-//			if (x->PlanetMass > maxMass)
-//			{
-//				maxMass = x->PlanetMass;
-//				centralPlanet = x;
-//				break;
-//			}
-//		}
 		
-//		for (APlanet* x : PracaInzGameState->Planets)
-//		{
-//			if (x->Name == "Sun")
-//			{
-//				star = x;
-//				break;
-//			}
-//		}
+		for (APlanet* x : PracaInzGameState->Planets)
+		{
+			if (x->Name == "Sun")
+			{
+				star = x;
+				break;
+			}
+		}
 
 		if (centralPlanet == this || centralPlanet == nullptr)
 		{

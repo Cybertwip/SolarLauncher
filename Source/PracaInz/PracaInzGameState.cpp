@@ -327,6 +327,10 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
+	
+	if(Planets.Num() > 24000){
+		return;
+	}
 	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
 	FVector InitialPosition = CalculateInitialPositionAU(PlanetData.Distance); // Calculate initial position based on distance
 	
