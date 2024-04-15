@@ -4,6 +4,7 @@
 #include "PracaInzGameState.h"
 
 #include "GameFramework/PlayerController.h"
+
 #include "Kismet/GameplayStatics.h"
 
 namespace {
@@ -46,6 +47,17 @@ void APracaInzGameState::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to read XML file at: %s"), *FileName);
 	}
+	
+	FileName = FPaths::ProjectContentDir() + TEXT("Data/nea_extended.json");
+	FString JsonData;
+	if (FFileHelper::LoadFileToString(JsonData, *FileName))
+	{
+		ParseJsonData(JsonData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to read Json file at: %s"), *FileName);
+	}
 }
 
 
@@ -77,13 +89,13 @@ void APracaInzGameState::SelectPreviousPlanet()
 	CurrentPlanet = Planets[PreviousIndex];
 	
 	CurrentPlanet->OnSelected(nullptr, FKey("Q"));
-
+	
 }
 
 
 void APracaInzGameState::SelectRocket()
 {
-	Rocket->OnSelected(nullptr, FKey("Q"));	
+	Rocket->OnSelected(nullptr, FKey("Q"));
 }
 
 void APracaInzGameState::FetchPlanetData()
@@ -100,7 +112,7 @@ void APracaInzGameState::OnHttpResponseReceived(FHttpRequestPtr Request, FHttpRe
 	if (bWasSuccessful && Response.IsValid() && Response->GetContentLength() > 0)
 	{
 		FString XmlData = FString(UTF8_TO_TCHAR(Response->GetContent().GetData()));
-
+		
 		// Here you should add the code to decompress if dealing with GZIP
 		ProcessXmlData(Response->GetContentAsString());
 	}
@@ -109,6 +121,44 @@ void APracaInzGameState::OnHttpResponseReceived(FHttpRequestPtr Request, FHttpRe
 		UE_LOG(LogTemp, Error, TEXT("Failed to download or invalid response"));
 	}
 }
+
+void APracaInzGameState::ParseJsonData(const FString& JsonData)
+{
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonData);
+	
+	if (FJsonSerializer::Deserialize(Reader, JsonArray))
+	{
+		for (const TSharedPtr<FJsonValue>& Value : JsonArray)
+		{
+			TSharedPtr<FJsonObject> PlanetObject = Value->AsObject();
+			if (PlanetObject.IsValid())
+			{
+				FPlanetData PlanetData;
+				PlanetData.Name = PlanetObject->GetStringField("Name");
+				PlanetData.Distance = PlanetObject->GetNumberField("Perihelion_dist");
+				
+				// Retrieve absolute magnitude H
+				float H = PlanetObject->GetNumberField("H");
+				// Assuming a typical albedo for rocky bodies
+				float Albedo = 0.15;
+				
+				// Calculate diameter in kilometers using the formula
+				float Diameter = 1329 / FMath::Sqrt(Albedo) * FMath::Pow(10, -0.2 * H);
+				PlanetData.Radius = Diameter / 2.0f;  // Radius is half the diameter
+				
+				// Assuming a density of 2500 kg/m³ for rocky bodies
+				float Density = 2500; // in kg/m³
+				// Calculate mass (Volume * Density)
+				float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters for volume calculation
+				PlanetData.Mass = Volume * Density; // Mass in kilograms
+				
+				SpawnPlanetFromJsonData(PlanetData);
+			}
+		}
+	}
+}
+
 
 void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 {
@@ -153,7 +203,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					{
 						continue; // Skip to the next star
 					}
-
+					
 					FString StarMassStr;
 					if (const FXmlNode* MassNode = StarNode->FindChildNode("mass"))
 					{
@@ -177,7 +227,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
-
+					
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
 				}
 			}
@@ -213,6 +263,26 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 		NewPlanet->Inclination = Inclination;
 		NewPlanet->SetActorScale3D(FVector(1));
 		NewPlanet->OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
+		
+	}
+}
 
+void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
+{
+	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
+	FVector InitialPosition = CalculateInitialPosition(PlanetData.Distance); // Calculate initial position based on distance
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+	
+	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
+	if (NewPlanet)
+	{
+		NewPlanet->PlanetMass = PlanetData.Mass * 332886.8125; // Convert mass to solar mass units
+		NewPlanet->Diameter = Diameter;
+		NewPlanet->Name = PlanetData.Name;
+		NewPlanet->SetActorScale3D(FVector(1)); // Assuming a uniform scale
+		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
 	}
 }

@@ -10,9 +10,21 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "XmlParser.h"
+#include "JsonObjectConverter.h"
 
 #include "GameFramework/GameStateBase.h"
 #include "PracaInzGameState.generated.h"
+
+struct FPlanetData
+{
+	FString Name;
+	
+	float Mass; // Placeholder since mass is not given
+	
+	float Radius; // Placeholder since radius is not given
+	
+	float Distance; // Using Perihelion distance as a proxy for distance
+};
 
 /**
  *
@@ -56,8 +68,10 @@ public:
 	float TimeSinceStart = 0.0f;
 	
 private:
+	void ParseJsonData(const FString& JsonData);
 	void FetchPlanetData();
 	void OnHttpResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void ProcessXmlData(const FString& XmlData);
+	void SpawnPlanetFromJsonData(const FPlanetData& PlanetData);
 	void SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float distance);
 };
