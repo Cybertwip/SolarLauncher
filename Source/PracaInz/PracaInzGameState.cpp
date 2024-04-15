@@ -212,6 +212,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
 		NewPlanet->SetActorScale3D(FVector(1));
-		// Set other properties as needed
+		NewPlanet->OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
+
 	}
 }
