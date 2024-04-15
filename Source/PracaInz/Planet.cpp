@@ -69,20 +69,25 @@ void APlanet::BeginPlay()
 //	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
 //	PlanetMesh->OnComponentEndOverlap.AddDynamic(this, &APlanet::OnOverlapEnd);
 	PlanetMesh->OnComponentHit.AddUniqueDynamic(this, &APlanet::OnHit);
-	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
 
+	InitialSetup();
 
-	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-	{
-		InitialVelocity *= PracaInzGameState->BaseDistance; 
-		Velocity = InitialVelocity;
-	}
-	p = InitialVelocity * PlanetMass;
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 	{
 		PracaInzGameModeBase->OnPlanetCreate(this);
 	}
-	
+}
+
+void APlanet::InitialSetup(){
+	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
+
+	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+	{
+		InitialVelocity *= PracaInzGameState->BaseDistance;
+		Velocity = InitialVelocity;
+	}
+	p = InitialVelocity * PlanetMass;
+
 }
 
 // Called every frame
@@ -122,7 +127,6 @@ void APlanet::Tick(float DeltaTime)
 		DestroyPlanet();  // Handle planet destruction
 	} else {
 		
-		
 		FVector currentPosition = GetActorLocation();
 		
 		// Calculate the new momentum based on the current one and the time jump
@@ -143,7 +147,7 @@ void APlanet::Tick(float DeltaTime)
 		SetActorRotation(NewRotation);
 		
 		// Debugging: Draw a line from the old position to the new position
-		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), FColor::Green, false, 3);
+		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), OrbitColor, false, 1);
 	}
 }
 

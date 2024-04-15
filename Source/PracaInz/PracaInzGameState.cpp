@@ -416,8 +416,13 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
-		NewPlanet->SetActorScale3D(FVector(0.01)); // Assuming a uniform scale
-		NewPlanet->Inclination = FMath::RandRange(0.0f, (float)M_PI * 2.0f);
-		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
+		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
+		FMath::RandRange(0.0f, (float)M_PI * 2.0f);
+
+		NewPlanet->InitialVelocity.Y = 29.780001;
+		
+		NewPlanet->InitialSetup();
+
+		NewPlanet->OrbitColor = FColor(255, 255, 255, 255); // Setting a default color, adjust as needed
 	}
 }

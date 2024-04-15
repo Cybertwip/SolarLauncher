@@ -71,6 +71,8 @@ public:
 	UFUNCTION(BluePrintCallable)
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit);
 
+	void InitialSetup();
+	
 	void UpdatePlanetPosition(float DeltaTime, FVector TotalForce);
 	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	void DestroyPlanet();
