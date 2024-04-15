@@ -126,9 +126,6 @@ void UPlanetInfoVRWidget::OnExit_Button()
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		PracaInzGameState->CurrentPlanetVR->PlanetMesh->SetWorldScale3D(PracaInzGameState->CurrentPlanetVRScale);
-		PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
-		PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetVisibility(false);
-		PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetHiddenInGame(true);
 		if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 		{
 			PracaInzGameModeBase->isPlanetSelected = false;

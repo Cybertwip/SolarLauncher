@@ -78,9 +78,6 @@ void APracaInzGameModeBase::setIsEditMode(bool value)
 			if (PracaInzGameState->CurrentPlanetVR)
 			{
 				PracaInzGameState->CurrentPlanetVR->PlanetMesh->SetWorldScale3D(PracaInzGameState->CurrentPlanetVRScale);
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetVisibility(false);
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetHiddenInGame(true);
 			}
 			if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 			{
@@ -106,9 +103,6 @@ void APracaInzGameModeBase::setIsMenuOpen(bool value)
 			if (PracaInzGameState->CurrentPlanetVR)
 			{
 				PracaInzGameState->CurrentPlanetVR->PlanetMesh->SetWorldScale3D(PracaInzGameState->CurrentPlanetVRScale);
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetVisibility(false);
-				PracaInzGameState->CurrentPlanetVR->planetInfoWidget->SetHiddenInGame(true);
 			}
 			if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 			{

@@ -21,7 +21,6 @@ APlanet::APlanet()
 	PrimaryActorTick.bCanEverTick = true;
 
 	PlanetMesh = CreateDefaultSubobject<UStaticMeshComponent>("PlanetMesh");
-	planetInfoWidget = CreateDefaultSubobject<UWidgetComponent>("PlanetInfoWidget");
 	PlanetMesh->SetAbsolute(true, true, true);
 	OnClicked.AddUniqueDynamic(this, &APlanet::OnSelected);
 	
@@ -82,10 +81,6 @@ void APlanet::BeginPlay()
 	{
 		PracaInzGameModeBase->OnPlanetCreate(this);
 	}
-
-	planetInfoWidget->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
-	planetInfoWidget->SetHiddenInGame(true);
-	planetInfoWidget->SetVisibility(false);
 	
 }
 
@@ -459,7 +454,7 @@ void APlanet::OnTriggerPressed()
 {
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
 	{
-		if (bIsOverLapped && PracaInzGameModeBase->isEditMode && !planetInfoWidget->IsVisible() && !PracaInzGameModeBase->isPlanetSelected
+		if (bIsOverLapped && PracaInzGameModeBase->isEditMode && !PracaInzGameModeBase->isPlanetSelected
 			&& !PracaInzGameModeBase->isMenuOpen)
 		{
 			PracaInzGameModeBase->isPlanetSelected = true;
@@ -477,9 +472,6 @@ void APlanet::OnTriggerPressed()
 			FVector Direction = world->GetFirstPlayerController()->GetPawn()->GetActorLocation() - GetActorLocation();
 			float scale = Direction.Size() * 0.001;
 			PlanetMesh->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
-			planetInfoWidget->SetWorldScale3D(FVector(scale, scale, scale));
-			planetInfoWidget->SetHiddenInGame(false);
-			planetInfoWidget->SetVisibility(true);
 			/*if (GEngine)
 				GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Green, FString::Printf(TEXT("Hello %s"), *world->GetFirstPlayerController()->GetPawn()->GetActorLocation().ToString()));*/
 			//planetInfoWidget->SetWorldRotation(FRotator((0, 0, 0)));
@@ -493,7 +485,6 @@ void APlanet::OnTriggerPressed()
 			FVector Forward = world->GetFirstPlayerController()->GetPawn()->GetActorLocation() - GetActorLocation();
 			FRotator Rot = UKismetMathLibrary::MakeRotFromXZ(Forward, FVector::UpVector);
 			auto x = MyLookRotation(Direction, world->GetFirstPlayerController()->GetPawn()->GetActorUpVector());
-			planetInfoWidget->SetWorldRotation(x);
 			//SetActorRotation(x);
 		}
 	}
