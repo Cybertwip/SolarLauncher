@@ -144,8 +144,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 			
 			float Distance = FCString::Atof(*DistanceStr);
 			
-			UE_LOG(LogTemp, Log, TEXT("System: %s, Distance: %f parsecs"), *SystemName, Distance);
-			
 			for (const FXmlNode* StarNode : SystemNode->GetChildrenNodes())
 			{
 				if (StarNode->GetTag() == "star")
@@ -187,9 +185,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 
-					
-					UE_LOG(LogTemp, Log, TEXT("Star: %s, Mass: %f, Radius: %f"), *StarName, StarMass, StarRadius);
-					
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
 					// Nested iteration for planets...
 				}
