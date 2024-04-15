@@ -288,7 +288,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->PlanetMass = PlanetData.Mass * 332886.8125; // Convert mass to solar mass units
+		NewPlanet->PlanetMass = PlanetData.Mass; // Convert mass to solar mass units
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(1)); // Assuming a uniform scale
