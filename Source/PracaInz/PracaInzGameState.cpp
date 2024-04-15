@@ -13,7 +13,7 @@ FVector CalculateInitialPositionParsecs(float Distance)
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
 	float GameWorldDistance = Distance * 47194.78; // Scaled parsecs
-	return FVector(GameWorldDistance, 0.0f, 0.0f);
+	return FVector(GameWorldDistance + 2770, -14390, 0.0f);
 }
 
 FVector CalculateInitialPositionAU(float Distance)
@@ -21,10 +21,8 @@ FVector CalculateInitialPositionAU(float Distance)
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 AU = 1000 units
 	float GameWorldDistance = Distance * 1000; // Scaled parsecs
-	return FVector(GameWorldDistance, 0.0f, 0.0f);
+	return FVector(GameWorldDistance + 2770, -14390, 0.0f);
 }
-
-
 }
 
 APracaInzGameState::APracaInzGameState()
@@ -50,7 +48,7 @@ void APracaInzGameState::BeginPlay()
 	FString XmlData;
 	if (FFileHelper::LoadFileToString(XmlData, *FileName))
 	{
-		ProcessXmlData(XmlData);
+		//ProcessXmlData(XmlData);
 	}
 	else
 	{
@@ -134,81 +132,74 @@ void APracaInzGameState::OnHttpResponseReceived(FHttpRequestPtr Request, FHttpRe
 		UE_LOG(LogTemp, Error, TEXT("Failed to download or invalid response"));
 	}
 }
-
 void APracaInzGameState::ParseJsonData(const FString& JsonData)
 {
 	TArray<TSharedPtr<FJsonValue>> JsonArray;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonData);
 	
-	if (FJsonSerializer::Deserialize(Reader, JsonArray))
+	if (!FJsonSerializer::Deserialize(Reader, JsonArray))
 	{
-		for (const TSharedPtr<FJsonValue>& Value : JsonArray)
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse JSON data"));
+		return;
+	}
+	
+	for (const TSharedPtr<FJsonValue>& Value : JsonArray)
+	{
+		TSharedPtr<FJsonObject> PlanetObject = Value->AsObject();
+		if (!PlanetObject.IsValid())
 		{
-			TSharedPtr<FJsonObject> PlanetObject = Value->AsObject();
-			if (PlanetObject.IsValid())
-			{
-				FPlanetData PlanetData;
-				FString Name;
-				if (PlanetObject->TryGetStringField("Name", Name))
-				{
-					PlanetData.Name = Name;
-				}
-				else
-				{
-					PlanetData.Name = TEXT("Unknown");  // Default value if "Name" is missing
-				}
-				PlanetData.Distance = PlanetObject->GetNumberField("Perihelion_dist");
-				
-				float H;
-				if (PlanetObject->TryGetNumberField("H", H))
-				{
-					// Calculate Diameter and Mass based on H
-					const float TypicalAlbedo = 0.15;  // Assuming albedo if not provided
-					float Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
-					PlanetData.Radius = Diameter / 2.0f;  // Radius is half the diameter
-					
-					const double EarthRadiusKm = 6371.0; // Earth's radius in kilometers
-
-					PlanetData.Radius = PlanetData.Radius / EarthRadiusKm; // Radius in Earth radii
-
-					
-					float Density = 2500; // Assuming a density of 2500 kg/m³
-					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters
-					PlanetData.Mass = (Volume * Density); // Mass in Earth masses
-				}
-				else
-				{
-					float assumedDiameter = 0.0f; // Default in kilometers
-					float density = 2600; // Average density in kg/m³ for rocky bodies
-					
-					// Check the type and assign assumed average diameter
-					FString OrbitType = PlanetObject->GetStringField("Orbit_type");
-					if (OrbitType == "Aten") {
-						assumedDiameter = 0.5; // Assumed average diameter in kilometers for Aten-type asteroids
-					} else if (OrbitType == "Apollo") {
-						assumedDiameter = 1.0; // Example value for Apollo
-					} else if (OrbitType == "Amor") {
-						assumedDiameter = 1.5; // Example value for Amor
-					} else {
-						assumedDiameter = 0.5; // Default value if type is unknown
-					}
-					
-					// Calculate radius and mass based on assumed diameter
-					float Radius = assumedDiameter / 2;
-					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(Radius * 1000, 3); // Convert radius to meters
-					float Mass = Volume * density; // Mass in kilograms
-					
-					const double EarthRadiusKm = 6371.0; // Earth's radius in kilometers
-					PlanetData.Radius = Radius / EarthRadiusKm; // Radius in Earth radii
-					PlanetData.Mass = Mass; // Mass in Earth masses
-
-				}
-				
-				SpawnPlanetFromJsonData(PlanetData);
+			continue;
+		}
+		
+		FPlanetData PlanetData;
+		FString Name;
+		if (!PlanetObject->TryGetStringField("Name", Name))
+		{
+			Name = TEXT("Unknown");  // Use default name if none is provided
+		}
+		PlanetData.Name = Name;
+		
+		double PerihelionDist;
+		if (!PlanetObject->TryGetNumberField("Perihelion_dist", PerihelionDist))
+		{
+			continue;  // Skip this planet if essential data is missing
+		}
+		PlanetData.Distance = PerihelionDist;
+		
+		double H;
+		if (PlanetObject->TryGetNumberField("H", H))
+		{
+			// Calculate Diameter and Mass based on H
+			const float TypicalAlbedo = 0.15;
+			double Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
+			PlanetData.Radius = Diameter / 2.0;  // Radius in kilometers, convert to Earth radii later
+			
+			// Assuming density for mass calculation
+			double Density = 2500;  // kg/m³, assuming a rocky composition
+			double Volume = (4.0 / 3.0) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius from km to meters
+			PlanetData.Mass = Volume * Density / 5.972e24; // Convert kg to Earth masses
+			
+			if(PlanetData.Mass == 0){
+				continue;
 			}
 		}
+		else
+		{
+			// Optionally handle planets without 'H' differently or skip
+			continue;
+		}
+		
+		// Check capacity to avoid exceeding limits
+		if (Planets.Num() >= 1000)
+		{
+			break;  // Stop processing if too many planets
+		}
+		
+		// Spawn or store the planet data
+		SpawnPlanetFromJsonData(PlanetData);
 	}
 }
+
 
 
 void APracaInzGameState::ProcessXmlData(const FString& XmlData)
@@ -279,6 +270,12 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 					
+					// Check capacity to avoid exceeding limits
+					if (Planets.Num() >= 500)
+					{
+						break;  // Stop processing if too many planets
+					}
+
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
 				}
 			}
@@ -313,14 +310,13 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
 		NewPlanet->SetActorScale3D(FVector(1));
-		NewPlanet->OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
-		
+		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
+
 	}
 }
 
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
-	
 	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
 	FVector InitialPosition = CalculateInitialPositionAU(PlanetData.Distance); // Calculate initial position based on distance
 	
@@ -335,6 +331,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(1)); // Assuming a uniform scale
+		NewPlanet->Inclination = 0.0f;
 		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
 	}
 }
