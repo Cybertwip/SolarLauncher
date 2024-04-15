@@ -6,6 +6,17 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
+namespace {
+FVector CalculateInitialPosition(float Distance)
+{
+	// Placeholder for a more complex calculation
+	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
+	float GameWorldDistance = Distance * 1000.0f;
+	return FVector(GameWorldDistance, 0.0f, 0.0f);
+}
+
+}
+
 APracaInzGameState::APracaInzGameState()
 {
 	PrimaryActorTick.bCanEverTick = true;
