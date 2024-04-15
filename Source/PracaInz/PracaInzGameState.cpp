@@ -144,7 +144,15 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 			if (PlanetObject.IsValid())
 			{
 				FPlanetData PlanetData;
-				PlanetData.Name = PlanetObject->GetStringField("Name");
+				FString Name;
+				if (PlanetObject->TryGetStringField("Name", Name))
+				{
+					PlanetData.Name = Name;
+				}
+				else
+				{
+					PlanetData.Name = TEXT("Unknown");  // Default value if "Name" is missing
+				}
 				PlanetData.Distance = PlanetObject->GetNumberField("Perihelion_dist");
 				
 				// Retrieve absolute magnitude H
