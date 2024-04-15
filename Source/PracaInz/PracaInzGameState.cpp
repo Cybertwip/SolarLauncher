@@ -36,7 +36,17 @@ void APracaInzGameState::BeginPlay()
 		BaseDistance = 1 / (1E3);
 	}
 	
-	FetchPlanetData();
+	FString FileName = FPaths::ProjectContentDir() + TEXT("Data/systems.xml");
+	FString XmlData;
+	if (FFileHelper::LoadFileToString(XmlData, *FileName))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Read XML Data: %s"), *XmlData);
+		ProcessXmlData(XmlData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to read XML file at: %s"), *FileName);
+	}
 }
 
 
@@ -90,6 +100,10 @@ void APracaInzGameState::OnHttpResponseReceived(FHttpRequestPtr Request, FHttpRe
 {
 	if (bWasSuccessful && Response.IsValid() && Response->GetContentLength() > 0)
 	{
+		FString XmlData = FString(UTF8_TO_TCHAR(Response->GetContent().GetData()));
+
+		UE_LOG(LogTemp, Log, TEXT("Received XML Data: %s"), *XmlData);
+
 		// Here you should add the code to decompress if dealing with GZIP
 		ProcessXmlData(Response->GetContentAsString());
 	}
