@@ -179,8 +179,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					float StarRadius = FCString::Atof(*StarRadiusStr);
 
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
-
-					return;
 				}
 			}
 		}
