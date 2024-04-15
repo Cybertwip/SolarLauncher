@@ -147,6 +147,16 @@ void ARocket::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AAct
 	bIsOverLapped = false;
 }
 
+bool ARocket::IsLaunchWindow(double PhaseAngle) {
+	// Define the acceptable range of phase angles for launch window
+	const double MinPhaseAngle = 4.20; // Minimum phase angle (degrees)
+	const double MaxPhaseAngle = 46.0; // Maximum phase angle (degrees)
+	
+	// Check if the phase angle is within the launch window range
+	return (PhaseAngle >= MinPhaseAngle && PhaseAngle <= MaxPhaseAngle);
+}
+
+
 void ARocket::UpdateRocketPosition(float DeltaTime)
 {
 	// Access the game state
@@ -154,6 +164,40 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	if (!PracaInzGameState)
 	{
 		return; // Early return if GameState is not found
+	}
+	
+	// Find Earth and Mars in the planet list
+	APlanet* Earth = nullptr;
+	APlanet* Mars = nullptr;
+	for (APlanet* Planet : PracaInzGameState->Planets) {
+		if (Planet->Name == "Earth") {
+			Earth = Planet;
+		} else if (Planet->Name == "Mars") {
+			Mars = Planet;
+		}
+	}
+	
+	if (!Earth || !Mars) {
+		return; // Earth or Mars not found, cannot proceed with calculation
+	}
+	
+	// Calculate the current positions of Earth and Mars
+	FVector EarthPosition = Earth->GetActorLocation();
+	FVector MarsPosition = Mars->GetActorLocation();
+	
+	// Calculate the vector from Earth to Mars
+	FVector EarthToMars = MarsPosition - EarthPosition;
+	
+	// Calculate the phase angle between Earth and Mars
+	double PhaseAngle = FMath::Acos(FVector::DotProduct(EarthToMars.GetSafeNormal(), -EarthPosition.GetSafeNormal())) * (180.0 / PI);
+
+	
+	if(!IsLaunchWindow(PhaseAngle) && !bLaunching){
+		
+		SetActorLocation(EarthPosition + FVector(-50, 0, 0));
+
+		bLaunching = true;
+		return;
 	}
 	
 	FVector r;
@@ -206,7 +250,7 @@ void ARocket::UpdateRocketPosition(float DeltaTime)
 	// Calculate the force acting on this planet from the central anchor
 	F = (RocketMass * centralPlanet->PlanetMass) / distance * r.GetSafeNormal();
 	
-	float thrustAngle = -0.032f; // Assuming thrust angle is -0.032 radians
+	float thrustAngle = 32; // Assuming thrust angle is -0.032 radians
 	FVector thrustDirection = FVector(FMath::Cos(thrustAngle), 0.0f, 0.0f);
 	FVector thrust = thrustDirection; // Calculate thrust vector
 	

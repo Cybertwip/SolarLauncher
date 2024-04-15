@@ -6,6 +6,11 @@
 #include "Rocket.h"
 #include "CameraPawn.h"
 #include "CoreMinimal.h"
+#include "HttpModule.h"
+#include "Interfaces/IHttpRequest.h"
+#include "Interfaces/IHttpResponse.h"
+#include "XmlParser.h"
+
 #include "GameFramework/GameStateBase.h"
 #include "PracaInzGameState.generated.h"
 
@@ -50,4 +55,9 @@ public:
 	
 	float TimeSinceStart = 0.0f;
 	
+private:
+	void FetchPlanetData();
+	void OnHttpResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	void ProcessXmlData(const FString& XmlData);
+	void SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float distance);
 };

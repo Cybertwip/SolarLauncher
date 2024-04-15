@@ -93,4 +93,7 @@ public:
 	
 	void InitialCalculations(float DeltaTime);
 	
+	bool IsLaunchWindow(double PhaseAngle);
+	
+	bool bLaunching = false;
 };

@@ -320,6 +320,10 @@ void APlanet::UpdatePlanetPosition(float DeltaTime)
 		// Convert orbital period to days for elliptical orbit
 		OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
 		
+		if (OrbitalPeriodDays > 365) {
+			OrbitalPeriodDays = fmod(OrbitalPeriodDays, 365.0); // Reset the day count when it exceeds 365
+		}
+
 		// Draw debug line to visualize orbit
 		DrawDebugLine(GetWorld(), oldLocation, GetActorLocation(), OrbitColor, false, 3);
 	}

@@ -12,10 +12,13 @@
 				"Engine",
 				"UMG",
 				"Slate",
-				"SlateCore"
+				"SlateCore",
+				"HTTP",
+				"XmlParser"
 			]
 		}
 	],
+
 	"Plugins": [
 		{
 			"Name": "EnhancedInput",
