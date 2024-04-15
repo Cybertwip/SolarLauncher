@@ -200,19 +200,6 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 
 				}
 				
-				// Assuming a typical albedo for rocky bodies
-				float Albedo = 0.15;
-				
-				// Calculate diameter in kilometers using the formula
-				float Diameter = 1329 / FMath::Sqrt(Albedo) * FMath::Pow(10, -0.2 * H);
-				PlanetData.Radius = Diameter / 2.0f;  // Radius is half the diameter
-				
-				// Assuming a density of 2500 kg/m³ for rocky bodies
-				float Density = 2500; // in kg/m³
-				// Calculate mass (Volume * Density)
-				float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters for volume calculation
-				PlanetData.Mass = Volume * Density; // Mass in kilograms
-				
 				SpawnPlanetFromJsonData(PlanetData);
 			}
 		}
