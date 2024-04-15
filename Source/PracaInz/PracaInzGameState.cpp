@@ -155,8 +155,45 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 				}
 				PlanetData.Distance = PlanetObject->GetNumberField("Perihelion_dist");
 				
-				// Retrieve absolute magnitude H
-				float H = PlanetObject->GetNumberField("H");
+				float H;
+				if (PlanetObject->TryGetNumberField("H", H))
+				{
+					// Calculate Diameter and Mass based on H
+					const float TypicalAlbedo = 0.15;  // Assuming albedo if not provided
+					float Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
+					PlanetData.Radius = Diameter / 2.0f;  // Radius is half the diameter
+					
+					float Density = 2500; // Assuming a density of 2500 kg/m³
+					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters
+					PlanetData.Mass = Volume * Density; // Mass in kilograms
+				}
+				else
+				{
+					float assumedDiameter = 0.0f; // Default in kilometers
+					float density = 2600; // Average density in kg/m³ for rocky bodies
+					
+					// Check the type and assign assumed average diameter
+					FString OrbitType = PlanetObject->GetStringField("Orbit_type");
+					if (OrbitType == "Aten") {
+						assumedDiameter = 0.5; // Assumed average diameter in kilometers for Aten-type asteroids
+					} else if (OrbitType == "Apollo") {
+						assumedDiameter = 1.0; // Example value for Apollo
+					} else if (OrbitType == "Amor") {
+						assumedDiameter = 1.5; // Example value for Amor
+					} else {
+						assumedDiameter = 0.5; // Default value if type is unknown
+					}
+					
+					// Calculate radius and mass based on assumed diameter
+					float Radius = assumedDiameter / 2;
+					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(Radius * 1000, 3); // Convert radius to meters
+					float Mass = Volume * density; // Mass in kilograms
+					
+					PlanetData.Radius = Radius;
+					PlanetData.Mass = Mass;
+
+				}
+				
 				// Assuming a typical albedo for rocky bodies
 				float Albedo = 0.15;
 				
