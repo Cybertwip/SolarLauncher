@@ -40,7 +40,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	FString Name;
 	UPROPERTY(EditAnywhere, Category = "Components")
-	FColor OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
+	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
 	//do zmiany inklinacji

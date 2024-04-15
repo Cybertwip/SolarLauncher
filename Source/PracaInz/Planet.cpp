@@ -57,6 +57,7 @@ APlanet::APlanet()
 	Diameter = 1;
 	Inclination = 0;
 	
+	OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
 }
 
 // Called when the game starts or when spawned
