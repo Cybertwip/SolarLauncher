@@ -19,7 +19,7 @@ FVector CalculateInitialPositionParsecs(float Distance)
 FVector CalculateInitialPositionAU(float Distance)
 {
 	// Placeholder for a more complex calculation
-	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
+	// Example: Convert parsec distance to game world units, assuming 1 AU = 1000 units
 	float GameWorldDistance = Distance * 1000; // Scaled parsecs
 	return FVector(GameWorldDistance, 0.0f, 0.0f);
 }
@@ -167,10 +167,14 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 					float Diameter = 1329 / FMath::Sqrt(TypicalAlbedo) * FMath::Pow(10, -0.2 * H);
 					PlanetData.Radius = Diameter / 2.0f;  // Radius is half the diameter
 					
+					const double EarthRadiusKm = 6371.0; // Earth's radius in kilometers
+
+					PlanetData.Radius = PlanetData.Radius / EarthRadiusKm; // Radius in Earth radii
+
+					
 					float Density = 2500; // Assuming a density of 2500 kg/m³
 					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius to meters
-					const double EarthMassKg = 5.972e24; // Earth's mass in kilograms
-					PlanetData.Mass = (Volume * Density) / EarthMassKg; // Mass in Earth masses
+					PlanetData.Mass = (Volume * Density); // Mass in Earth masses
 				}
 				else
 				{
@@ -194,9 +198,9 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 					float Volume = (4.0f / 3.0f) * PI * FMath::Pow(Radius * 1000, 3); // Convert radius to meters
 					float Mass = Volume * density; // Mass in kilograms
 					
-					PlanetData.Radius = Radius;
-					const double EarthMassKg = 5.972e24; // Earth's mass in kilograms
-					PlanetData.Mass = Mass / EarthMassKg; // Mass in Earth masses
+					const double EarthRadiusKm = 6371.0; // Earth's radius in kilometers
+					PlanetData.Radius = Radius / EarthRadiusKm; // Radius in Earth radii
+					PlanetData.Mass = Mass; // Mass in Earth masses
 
 				}
 				
@@ -317,9 +321,6 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
 	
-	if(Planets.Num() > 24000){
-		return;
-	}
 	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
 	FVector InitialPosition = CalculateInitialPositionAU(PlanetData.Distance); // Calculate initial position based on distance
 	
