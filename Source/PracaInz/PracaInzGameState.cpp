@@ -84,14 +84,14 @@ void APracaInzGameState::BeginPlay()
 	
 	for (APlanet* planet : Planets)
 	{
-		PlanetForces.Add(planet, FVector(0, 0, 0));
+		AstralForces.Add(planet, FVector(0, 0, 0));
 		
 		Objects.Add(planet);
 	}
 	
 	Objects.Add(Rocket);
 	
-	PlanetForces.Add(Rocket);
+	AstralForces.Add(Rocket);
 }
 
 void APracaInzGameState::Tick(float DeltaTime)
@@ -121,12 +121,12 @@ void APracaInzGameState::Tick(float DeltaTime)
 			TotalForce += F;
 		}
 		
-		AstralForces[planet] = TotalForce;
+		AstralForces[astralObject] = TotalForce;
 	}, false);
 	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
 		AstralObject* astralObject = Objects[index];
 		
-		astralObject->UpdatePrecomputedForce(AstralForces[planet]);
+		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
 
 	}, false);
 	
