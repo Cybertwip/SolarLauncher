@@ -278,5 +278,7 @@ void ARocket::AdjustThrustAsNearingTarget()
 	
 	if(Distance <= MinReduceDistance){
 		bIsThrusterActive = false;
+		
+		ThrustForce = MaxThrustForce;
 	}
 }
