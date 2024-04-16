@@ -121,11 +121,32 @@ void APracaInzGameState::Tick(float DeltaTime)
 			
 			FVector F = G * (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
 			
-			AstralForces[astralObject] += F;
+			TotalForce += F;
 			// Symmetry: Add force to the other object
 			AstralForces[otherObject] -= F;
 		}
 		
+		// Calculate gravitational forces from Lagrange points dynamically
+		for (int32 j = index + 1; j < Objects.Num(); ++j) {
+			AAstralObject* otherObject = Objects[j];
+			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
+			double distanceSquared = r.SizeSquared();
+			
+			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
+			
+			// Calculate Lagrange point mass based on the other object's mass
+			float lagrangePointMass = otherObject->PlanetMass; // No scaling needed
+			
+			// Calculate gravitational force from Lagrange point
+			FVector F = G * (astralObject->PlanetMass * lagrangePointMass) / distanceSquared * r.GetSafeNormal();
+			
+			TotalForce += F;
+			
+			// Symmetry: Add force to the other object
+			AstralForces[otherObject] -= F;
+		}
+		
+		AstralForces[astralObject] = TotalForce;
 	}, false);
 	
 	// Update forces and simulate objects
