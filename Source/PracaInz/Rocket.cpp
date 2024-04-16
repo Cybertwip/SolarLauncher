@@ -71,10 +71,6 @@ void ARocket::InitialSetup(){
 	}
 }
 
-void ARocket::Launch(){
-	bIsThrusterActive = true;
-}
-
 void ARocket::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
 {
 	FVector currentPosition = GetActorLocation();
@@ -108,6 +104,8 @@ void ARocket::Tick(float DeltaTime)
 		return;  // Early exit if game state is not accessible
 	}
 	
+	
+	CalculateLaunchReadiness();
 	
 	FVector TotalForce = PrecomputedForce;
 	FVector Thrust;
@@ -184,15 +182,6 @@ void ARocket::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AAct
 	bIsOverLapped = false;
 }
 
-bool ARocket::IsLaunchWindow(double PhaseAngle) {
-	// Define the acceptable range of phase angles for launch window
-	const double MinPhaseAngle = 4.20; // Minimum phase angle (degrees)
-	const double MaxPhaseAngle = 46.0; // Maximum phase angle (degrees)
-	
-	// Check if the phase angle is within the launch window range
-	return (PhaseAngle >= MinPhaseAngle && PhaseAngle <= MaxPhaseAngle);
-}
-
 void ARocket::DestroyRocket()
 {
 	Destroy();
@@ -230,3 +219,59 @@ void ARocket::AdjustOrientationTowardsTarget()
 	// Smoothly interpolate the rocket's current rotation towards the desired rotation
 	SetActorRotation(FMath::Lerp(GetActorRotation(), DesiredRotation, 0.1f)); // Tune the lerp factor (0.1f here) based on desired responsiveness
 }
+
+void ARocket::CalculateLaunchReadiness()
+{
+	if (!Target)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No target set for the rocket."));
+		return;
+	}
+	
+	FVector TargetLocation = Target->GetActorLocation();
+	FVector RocketLocation = GetActorLocation();
+	float DistanceToTarget = FVector::Dist(TargetLocation, RocketLocation);
+	
+	// Calculate time to reach the target with current thrust settings
+	float TimeToReachTarget = CalculateTimeToReachTarget(DistanceToTarget, ThrustForce, PlanetMass);
+	
+	// Calculate the phase angle at the time of potential arrival
+	double PhaseAngleAtArrival = CalculatePhaseAngleAtFutureTime(TimeToReachTarget);
+	
+	// Check if the phase angle is within the launch window
+	if (IsLaunchWindow(PhaseAngleAtArrival))
+	{
+		Launch();
+	}
+}
+
+float ARocket::CalculateTimeToReachTarget(float Distance, float Thrust, float Mass)
+{
+	// Assuming a simplified constant acceleration formula: t = sqrt(2 * d / a)
+	// where a = F / m (Thrust divided by Mass)
+	float Acceleration = Thrust / Mass;
+	return FMath::Sqrt(2 * Distance / Acceleration);
+}
+
+double ARocket::CalculatePhaseAngleAtFutureTime(float Time)
+{
+	// Placeholder for phase angle calculation
+	// This should ideally account for the positions of Earth, target planet, and the rocket over time
+	// Simplified example:
+	return FMath::Fmod(360.0 * (Time / 3600.0), 360.0); // Assuming a simple circular orbit
+}
+
+void ARocket::Launch()
+{
+	bIsThrusterActive = true; // Activating the thrusters to start the launch
+	AdjustOrientationTowardsTarget(); // Ensure the rocket is pointed towards the target
+	UE_LOG(LogTemp, Log, TEXT("Rocket launched towards target."));
+}
+
+bool ARocket::IsLaunchWindow(double PhaseAngle)
+{
+	const double MinPhaseAngle = 4.0;
+	const double MaxPhaseAngle = 10.0;
+	return PhaseAngle >= MinPhaseAngle && PhaseAngle <= MaxPhaseAngle;
+}
+

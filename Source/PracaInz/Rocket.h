@@ -62,8 +62,21 @@ public:
 	
 	AAstralObject* Target;
 
+	// Calculates whether the rocket is ready for launch based on target distance and optimal launch window
+	void CalculateLaunchReadiness();
+	
+	// Calculates the time required to reach the target based on current thrust and mass
+	float CalculateTimeToReachTarget(float Distance, float Thrust, float Mass);
+	
+	// Calculates the phase angle at a specified time in the future to determine if it's within a launch window
+	double CalculatePhaseAngleAtFutureTime(float Time);
+	
+	// Initiates the rocket's launch if conditions are favorable
 	void Launch();
 	
+	// Determines if the current phase angle is within the acceptable range for a launch window
+	bool IsLaunchWindow(double PhaseAngle);
+
 	void AdjustOrientationTowardsTarget();
 
 private:
@@ -102,8 +115,6 @@ public:
 	void ToggleThruster();
 	
 	void InitialCalculations(float DeltaTime);
-	
-	bool IsLaunchWindow(double PhaseAngle);
 	
 	bool bLaunching = false;
 };
