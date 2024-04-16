@@ -26,7 +26,7 @@ ARocket::ARocket()
 	SetRootComponent(RocketMesh);
 
 	// Initialize rocket properties
-	PlanetMass = 1.f;
+	PlanetMass = 0.000004f;
 	InitialVelocity = FVector::ZeroVector;
 	MaxThrustForce = 10.0;
 	

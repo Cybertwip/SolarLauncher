@@ -98,52 +98,47 @@ void APracaInzGameState::BeginPlay()
 	}
 }
 
+
 void APracaInzGameState::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	const double c = 3e8 * BaseDistance; // Speed of light in meters per second
-	double G_modified;
-
 	// Update the total elapsed time since the start of the simulation
 	TimeSinceStart += DeltaTime;
 	
-	// Reset forces for all objects
-	for (AAstralObject* obj : Objects) {
-		AstralForces[obj] = FVector(0, 0, 0);
-	}
-	
-	// Calculate gravitational forces between all pairs of planets
-	for (int32 i = 0; i < Objects.Num(); ++i) {
-		AAstralObject* astralObject = Objects[i];
-		for (int32 j = i + 1; j < Objects.Num(); ++j) {
+	// Calculate gravitational forces between all pairs of planets using ParallelFor
+	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
+		AAstralObject* astralObject = Objects[index];
+		FVector TotalForce = FVector(0, 0, 0);
+		
+		// Calculate gravitational forces between celestial objects
+		for (int32 j = index + 1; j < Objects.Num(); ++j) {
 			AAstralObject* otherObject = Objects[j];
 			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
-			FVector v_rel = otherObject->GetVelocity() - astralObject->GetVelocity();
 			double distanceSquared = r.SizeSquared();
-			double relativeSpeedSquared = v_rel.SizeSquared();
 			
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
-			// Calculate the modified gravitational constant
-			G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
+			FVector F = G * (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
 			
-			FVector forceDirection = r.GetSafeNormal();
-			FVector F = (G_modified * astralObject->PlanetMass * otherObject->PlanetMass / distanceSquared) * forceDirection;
-
-			// Apply the gravitational force symmetrically
-			AstralForces[astralObject] += F * DeltaTime;
-			AstralForces[otherObject] -= F * DeltaTime;
+			AstralForces[astralObject] += F;
+			// Symmetry: Add force to the other object
+			AstralForces[otherObject] -= F;
 		}
-	}
+		
+	}, false);
 	
-	// Update precomputed forces and simulate movement
-	for (AAstralObject* astralObject : Objects) {
+	// Update forces and simulate objects
+	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
+		AAstralObject* astralObject = Objects[index];
 		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
+	}, false);
+	
+	for (AAstralObject* astralObject : Objects)
+	{
 		astralObject->Tick(DeltaTime);
 	}
 }
-
 
 void APracaInzGameState::SelectNextPlanet()
 {
