@@ -117,4 +117,10 @@ public:
 	void InitialCalculations(float DeltaTime);
 	
 	bool bLaunching = false;
+	
+	
+	void AdjustOrientationTowardsMovingDirection();
+
+	void AdjustThrustAsNearingTarget();
+
 };
