@@ -66,7 +66,7 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		{
 			MassTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->Mass))));
+		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->PlanetMass))));
 	}
 	if (InclinationTextBox)
 	{
@@ -149,7 +149,7 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 		{
 			MassTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->Mass))));
+		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->PlanetMass))));
 	}
 	if (InclinationTextBox)
 	{
@@ -224,18 +224,18 @@ void UPlanetInfoWidget::OnCommittedMass()
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
-		double mass = FCString::Atof(*MassTextBox->GetText().ToString());
+		double PlanetMass = FCString::Atof(*MassTextBox->GetText().ToString());
 		for (int i=0; i != PracaInzGameState->Planets.Num();i++)
 		{
 			APlanet* x = PracaInzGameState->Planets[i];
-			if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x!=Planet)	
+			if (fabs(x->PlanetMass - PlanetMass) <= 0.0000001 * fabs(x->PlanetMass) && x!=Planet)	
 			{
-				mass = mass + 0.0001;
+				PlanetMass = PlanetMass + 0.0001;
 				i = -1;
 			}
 		}
-		Planet->Mass = mass;
-		Planet->p = Planet->Mass * Planet->Velocity;
+		Planet->PlanetMass = PlanetMass;
+		Planet->p = Planet->PlanetMass * Planet->Velocity;
 	}
 }
 
@@ -268,7 +268,7 @@ void UPlanetInfoWidget::OnCommittedVelocity()
 			PracaInzGameState -> CurrentDeltaTime * PracaInzGameState->BaseDistance * 
 			Planet->Velocity/Planet->Velocity.Size();
 		}
-		Planet->p = Planet->Mass * Planet->Velocity;
+		Planet->p = Planet->PlanetMass * Planet->Velocity;
 	}
 }
 

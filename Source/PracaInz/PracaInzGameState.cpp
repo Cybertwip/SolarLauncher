@@ -64,7 +64,7 @@ void APracaInzGameState::BeginPlay()
 	}
 	
 	Planets.Sort([](APlanet& A, APlanet& B) {
-		return A.Mass < B.Mass; // Ascending order
+		return A.PlanetMass < B.PlanetMass; // Ascending order
 	});
 	
 	for (APlanet* planet : Planets)
@@ -91,7 +91,7 @@ void APracaInzGameState::BeginPlay()
 	
 	Objects.Add(Rocket);
 	
-	AstralForces.Add(Rocket);
+	AstralForces.Add(Rocket, FVector(0, 0, 0));
 }
 
 void APracaInzGameState::Tick(float DeltaTime)
@@ -115,7 +115,7 @@ void APracaInzGameState::Tick(float DeltaTime)
 			
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
-			FVector F = (astralObject->Mass * otherObject->Mass) / distanceSquared * r.GetSafeNormal();
+			FVector F = (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
 			F *= G * DeltaTime * DeltaTime;
 			
 			TotalForce += F;
@@ -160,13 +160,13 @@ void APracaInzGameState::Tick(float DeltaTime)
 	// Calculate semi-major axis (assuming a circular orbit for simplicity)
 	const double timeScaled = TimeSinceStart * TimeSinceStart * SecondsInSimulation;
 	
-	const double semiMajorAxis = (G * star->Mass * timeScaled) / (4 * PI * PI);
+	const double semiMajorAxis = (G * star->PlanetMass * timeScaled) / (4 * PI * PI);
 	
 	// Calculate semi-minor axis for elliptical orbit
 	const double semiMinorAxis = semiMajorAxis * FMath::Sin(inclinationRadians);
 	
 	// Calculate the orbital period for elliptical orbit using Kepler's third law
-	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->Mass + earth->Mass)));
+	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->PlanetMass + earth->PlanetMass)));
 	
 	// Convert orbital period to days for elliptical orbit
 	earth->OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
@@ -265,13 +265,13 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		double H;
 		if (PlanetObject->TryGetNumberField("H", H))
 		{
-			// Calculate Diameter and Mass based on H
+			// Calculate Diameter and PlanetMass based on H
 			const double TypicalAlbedo = 0.15;
 			double Diameter = std::pow(10, (3.123 - H / 5));
 
 			PlanetData.Radius = Diameter / 2.0;  // Radius in kilometers, convert to Earth radii later
 						
-			// Assuming density for mass calculation
+			// Assuming density for PlanetMass calculation
 			double Density = 2500;  // kg/m³, assuming a rocky composition
 			
 			PlanetData.Radius *= BaseDistance;
@@ -345,7 +345,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					
 					FString StarMassStr;
-					if (const FXmlNode* MassNode = StarNode->FindChildNode("mass"))
+					if (const FXmlNode* MassNode = StarNode->FindChildNode("PlanetMass"))
 					{
 						StarMassStr = MassNode->GetContent();
 					}
@@ -380,7 +380,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 }
 
 
-void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double Mass, double Radius, double Inclination, double Distance)
+void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double PlanetMass, double Radius, double Inclination, double Distance)
 {
 	// Convert radius to diameter
 	double Diameter = Radius * 2.0f;
@@ -397,7 +397,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double Mass
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->Mass = Mass * 332886.8125; // Sun mass
+		NewPlanet->PlanetMass = PlanetMass * 332886.8125; // Sun PlanetMass
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
@@ -419,7 +419,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->Mass = PlanetData.Mass;
+		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->InitialVelocity = FVector(0, 13, 0);

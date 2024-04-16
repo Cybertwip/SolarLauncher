@@ -47,7 +47,7 @@ void UPlanetInfoVRWidget::NativeConstruct()
 void UPlanetInfoVRWidget::OnMass_Textbox_Committed()
 {
 	/*if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("On Mass"));*/
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("On PlanetMass"));*/
 	Selected_Textbox = Mass_Textbox;
 }
 
@@ -154,19 +154,19 @@ void UPlanetInfoVRWidget::OnSave_Button()
 				Planet->Velocity / Planet->Velocity.Size();
 		}
 
-		double mass = FCString::Atof(*Mass_Textbox->GetText().ToString());
+		double PlanetMass = FCString::Atof(*Mass_Textbox->GetText().ToString());
 		for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
 		{
 			APlanet* x = PracaInzGameState->Planets[i];
-			if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x != Planet)
+			if (fabs(x->PlanetMass - PlanetMass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
 			{
-				mass = mass + 0.0001;
+				PlanetMass = PlanetMass + 0.0001;
 				i = -1;
 			}
 		}
-		Planet->Mass = mass;
+		Planet->PlanetMass = PlanetMass;
 
-		Planet->p = Planet->Mass * Planet->Velocity;
+		Planet->p = Planet->PlanetMass * Planet->Velocity;
 	}
 }
 
@@ -184,7 +184,7 @@ void UPlanetInfoVRWidget::OnLoadCurrentParrams_Button()
 			}
 			if (PracaInzGameState->CurrentPlanetVR)
 			{
-				Mass_Textbox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->CurrentPlanetVR->Mass))));
+				Mass_Textbox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->CurrentPlanetVR->PlanetMass))));
 			}
 		}
 

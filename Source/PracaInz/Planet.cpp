@@ -52,7 +52,7 @@ APlanet::APlanet()
 	InitialVelocity.Y = 29,780001;
 	InitialVelocity.Z = 0.00000000000;
 	p = FVector(0, 0, 0);
-	Mass = 1;
+	PlanetMass = 1;
 	Diameter = 0.7;
 	Inclination = 0.0039;
 	RotationSpeed = -0.0041;
@@ -87,11 +87,11 @@ void APlanet::InitialSetup(){
 		InitialVelocity *= PracaInzGameState->BaseDistance;
 		Velocity = InitialVelocity;
 		
-		p = InitialVelocity * Mass;
+		p = InitialVelocity * PlanetMass;
 		
 		PerformInitialCalculations(0.016, PracaInzGameState);
 	} else {
-		p = InitialVelocity * Mass;
+		p = InitialVelocity * PlanetMass;
 	}
 
 }
@@ -127,7 +127,7 @@ void APlanet::Tick(float DeltaTime)
 		FVector New_p = p + (PrecomputedForce * GameState->SecondsInSimulation);
 		
 		// Calculate the new velocity
-		Velocity = New_p / Mass;
+		Velocity = New_p / PlanetMass;
 		
 		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
 
@@ -215,7 +215,7 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 //		if (APlanet* Planet = Cast<APlanet>(OtherActor))
 //		{
 //			/*...*/
-//			if (Planet->Mass > Mass)
+//			if (Planet->PlanetMass > PlanetMass)
 //			{
 //				if(PracaInzGameState->CurrentPlanet==this)
 //				{ 
@@ -231,20 +231,20 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 //				bIsBeingDestroyed = true;
 //			}
 //			/*...*/
-//			else if(Planet->Mass < Mass)
+//			else if(Planet->PlanetMass < PlanetMass)
 //			{
 //				p += Planet->p;
-//				double mass = Mass + Planet->Mass;
+//				double PlanetMass = PlanetMass + Planet->PlanetMass;
 //				for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
 //				{
 //					APlanet* x = PracaInzGameState->Planets[i];
-//					if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x != Planet)
+//					if (fabs(x->PlanetMass - PlanetMass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
 //					{
-//						mass = mass + 0.0001;
+//						PlanetMass = PlanetMass + 0.0001;
 //						i = -1;
 //					}
 //				}
-//				Mass = mass;
+//				PlanetMass = PlanetMass;
 //				if (PracaInzGameState->CurrentPlanet == this)
 //				{
 //					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
@@ -279,7 +279,7 @@ void APlanet::InitialCalculations(float DeltaTime)
 			{
 				r = x->GetActorLocation() - GetActorLocation();
 				distance = r.Size() * r.Size() * r.Size();
-				F += (((Mass) * (x->Mass)) / (distance)) * r;
+				F += (((PlanetMass) * (x->PlanetMass)) / (distance)) * r;
 			}
 		}
 		F *= PracaInzGameState->G * DeltaTime * DeltaTime;

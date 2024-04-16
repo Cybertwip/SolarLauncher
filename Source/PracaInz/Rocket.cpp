@@ -26,7 +26,7 @@ ARocket::ARocket()
 	SetRootComponent(RocketMesh);
 
 	// Initialize rocket properties
-	Mass = 1.f;
+	PlanetMass = 1.f;
 	InitialVelocity = FVector::ZeroVector;
 	ThrustForce = 1.0f;
 	MaxSpeed = 5000.f;
@@ -64,11 +64,11 @@ void ARocket::InitialSetup(){
 		InitialVelocity *= PracaInzGameState->BaseDistance;
 		Velocity = InitialVelocity;
 		
-		p = InitialVelocity * Mass;
+		p = InitialVelocity * PlanetMass;
 		
 		PerformInitialCalculations(0.016, PracaInzGameState);
 	} else {
-		p = InitialVelocity * Mass;
+		p = InitialVelocity * PlanetMass;
 	}
 	
 }
@@ -119,7 +119,7 @@ void ARocket::Tick(float DeltaTime)
 		FVector New_p = p + (PrecomputedForce * GameState->SecondsInSimulation);
 		
 		// Calculate the new velocity
-		Velocity = New_p / Mass;
+		Velocity = New_p / PlanetMass;
 		
 		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
 		
@@ -183,7 +183,7 @@ void ARocket::FireThruster()
 	if(GameState){
 		// Apply thrust force to rocket
 		FVector Thrust = GetActorForwardVector() * ThrustForce * GameState->BaseDistance;
-		Velocity += Thrust / Mass;
+		Velocity += Thrust / PlanetMass;
 	}
 }
 

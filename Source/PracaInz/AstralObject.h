@@ -15,7 +15,7 @@ class PRACAINZ_API AAstralObject : public AActor
 	AAstralObject();
 		
 	UPROPERTY(EditAnywhere, Category = "Components")
-	double Mass;
+	double PlanetMass;
 
 	FVector PrecomputedForce;
 	
