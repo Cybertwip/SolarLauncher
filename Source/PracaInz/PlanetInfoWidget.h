@@ -29,7 +29,7 @@ public:
 	UTextBlock* PlanetDaysInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-	UEditableTextBox* PlanetMassTextBox;
+	UEditableTextBox* MassTextBox;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 	USlider* SecondsSlider;
@@ -62,7 +62,7 @@ public:
 	void OnSliderValueChanged(float Value);
 	
 	UFUNCTION()
-	void OnCommittedPlanetMass();
+	void OnCommittedMass();
 	
 	UFUNCTION()
 	void OnCommittedVelocity() ;

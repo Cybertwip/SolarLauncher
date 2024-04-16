@@ -6,12 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "Math/UnrealMath.h"
 #include "Components/WidgetComponent.h"
+
+#include "AstralObject.h"
 #include "Planet.generated.h"
 
 class APracaInzGameState;
 
 UCLASS()
-class PRACAINZ_API APlanet : public AActor
+class PRACAINZ_API APlanet : public AstralObject
 {
 	GENERATED_BODY()
 	
@@ -30,8 +32,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UStaticMeshComponent* PlanetMesh;
 	UPROPERTY(EditAnywhere, Category = "Components")
-	double PlanetMass;
-	UPROPERTY(EditAnywhere, Category = "Components")
 	FVector InitialVelocity;
 	UPROPERTY(EditAnywhere, Category = "Components")
 	float RotationSpeed;
@@ -45,7 +45,6 @@ public:
 	FColor OrbitColor;
 	FVector p;
 	FVector Velocity;
-	FVector PrecomputedForce;
 	
 	//VR
 	bool bIsBindedToPlayerInput = false;
@@ -71,7 +70,6 @@ public:
 
 	void InitialSetup();
 	
-	void UpdatePlanetPosition(float DeltaTime, FVector TotalForce);
 	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);

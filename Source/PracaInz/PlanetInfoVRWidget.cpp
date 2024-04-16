@@ -158,15 +158,15 @@ void UPlanetInfoVRWidget::OnSave_Button()
 		for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
 		{
 			APlanet* x = PracaInzGameState->Planets[i];
-			if (fabs(x->PlanetMass - mass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
+			if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x != Planet)
 			{
 				mass = mass + 0.0001;
 				i = -1;
 			}
 		}
-		Planet->PlanetMass = mass;
+		Planet->Mass = mass;
 
-		Planet->p = Planet->PlanetMass * Planet->Velocity;
+		Planet->p = Planet->Mass * Planet->Velocity;
 	}
 }
 
@@ -184,7 +184,7 @@ void UPlanetInfoVRWidget::OnLoadCurrentParrams_Button()
 			}
 			if (PracaInzGameState->CurrentPlanetVR)
 			{
-				Mass_Textbox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->CurrentPlanetVR->PlanetMass))));
+				Mass_Textbox->SetText(FText::FromString((FString::SanitizeFloat(PracaInzGameState->CurrentPlanetVR->Mass))));
 			}
 		}
 

@@ -5,10 +5,17 @@
 #include "Planet.h" // Include the Planet header file
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+
+#include "AstralObject.h"
+
 #include "Rocket.generated.h"
 
+
+class APracaInzGameState;
+
+
 UCLASS()
-class PRACAINZ_API ARocket : public AActor
+class PRACAINZ_API ARocket : public AstralObject
 {
 	GENERATED_BODY()
 	
@@ -30,11 +37,7 @@ public:
 	
 	UPROPERTY(VisibleAnywhere)
 	UWidgetComponent* RocketInfoWidget;
-	
-	// Rocket properties
-	UPROPERTY(EditAnywhere)
-	float RocketMass;
-	
+		
 	UPROPERTY(EditAnywhere)
 	FVector InitialVelocity;
 	
@@ -46,7 +49,7 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	FColor RocketColor;
-	
+
 	// State
 	bool bIsThrusterActive;
 	
@@ -79,8 +82,10 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
-	// Update rocket's position based on gravitational forces and thruster
-	void UpdateRocketPosition(float DeltaTime);
+	
+	void InitialSetup();
+	
+	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	
 	// Destroy the rocket
 	void DestroyRocket();

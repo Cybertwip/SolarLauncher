@@ -64,7 +64,7 @@ void APracaInzGameState::BeginPlay()
 	}
 	
 	Planets.Sort([](APlanet& A, APlanet& B) {
-		return A.PlanetMass < B.PlanetMass; // Ascending order
+		return A.Mass < B.Mass; // Ascending order
 	});
 	
 	for (APlanet* planet : Planets)
@@ -85,7 +85,13 @@ void APracaInzGameState::BeginPlay()
 	for (APlanet* planet : Planets)
 	{
 		PlanetForces.Add(planet, FVector(0, 0, 0));
+		
+		Objects.Add(planet);
 	}
+	
+	Objects.Add(Rocket);
+	
+	PlanetForces.Add(Rocket);
 }
 
 void APracaInzGameState::Tick(float DeltaTime)
@@ -96,34 +102,35 @@ void APracaInzGameState::Tick(float DeltaTime)
 	TimeSinceStart += DeltaTime;
 	
 	// Calculate gravitational forces between all pairs of planets using ParallelFor
-	ParallelFor(Planets.Num(), [this, DeltaTime](int32 index) {
-		APlanet* planet = Planets[index];
+	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
+		AstralObject* astralObject = Objects[index];
 		FVector TotalForce = FVector(0, 0, 0);
 		
-		for (int32 j = 0; j < Planets.Num(); ++j) {
+		for (int32 j = 0; j < Objects.Num(); ++j) {
 			if (index == j) continue; // Skip self
 			
-			APlanet* otherPlanet = Planets[j];
-			FVector r = otherPlanet->GetActorLocation() - planet->GetActorLocation();
+			AstralObject* otherObject = Objects[j];
+			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
 			double distanceSquared = r.SizeSquared();
 			
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
-			FVector F = (planet->PlanetMass * otherPlanet->PlanetMass) / distanceSquared * r.GetSafeNormal();
+			FVector F = (astralObject->Mass * otherObject->Mass) / distanceSquared * r.GetSafeNormal();
 			F *= G * DeltaTime * DeltaTime;
 			
 			TotalForce += F;
 		}
 		
-		PlanetForces[planet] = TotalForce;
-	}, false); 
-	ParallelFor(Planets.Num(), [this, DeltaTime](int32 index) {
-		APlanet* planet = Planets[index];
+		AstralForces[planet] = TotalForce;
+	}, false);
+	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
+		AstralObject* astralObject = Objects[index];
 		
-		planet->UpdatePlanetPosition(DeltaTime, PlanetForces[planet]);
+		astralObject->UpdatePrecomputedForce(AstralForces[planet]);
 
 	}, false);
-	for (APlanet* planet : Planets)
+	
+	for (AstralObject* planet : Objects)
 	{
 		planet->Tick(DeltaTime);
 	}
@@ -153,13 +160,13 @@ void APracaInzGameState::Tick(float DeltaTime)
 	// Calculate semi-major axis (assuming a circular orbit for simplicity)
 	const double timeScaled = TimeSinceStart * TimeSinceStart * SecondsInSimulation;
 	
-	const double semiMajorAxis = (G * star->PlanetMass * timeScaled) / (4 * PI * PI);
+	const double semiMajorAxis = (G * star->Mass * timeScaled) / (4 * PI * PI);
 	
 	// Calculate semi-minor axis for elliptical orbit
 	const double semiMinorAxis = semiMajorAxis * FMath::Sin(inclinationRadians);
 	
 	// Calculate the orbital period for elliptical orbit using Kepler's third law
-	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->PlanetMass + earth->PlanetMass)));
+	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->Mass + earth->Mass)));
 	
 	// Convert orbital period to days for elliptical orbit
 	earth->OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
@@ -390,7 +397,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double Mass
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->PlanetMass = Mass * 332886.8125; // Sun mass
+		NewPlanet->Mass = Mass * 332886.8125; // Sun mass
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = Name;
 		NewPlanet->Inclination = Inclination;
@@ -412,7 +419,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
 	if (NewPlanet)
 	{
-		NewPlanet->PlanetMass = PlanetData.Mass;
+		NewPlanet->Mass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->InitialVelocity = FVector(0, 13, 0);

@@ -18,8 +18,8 @@ void UPlanetInfoWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	FScriptDelegate DelegateMass;
-	DelegateMass.BindUFunction(this, "OnCommittedPlanetMass");
-	PlanetMassTextBox->OnTextCommitted.Add(DelegateMass);
+	DelegateMass.BindUFunction(this, "OnCommittedMass");
+	MassTextBox->OnTextCommitted.Add(DelegateMass);
 
 	FScriptDelegate DelegateTime;
 	DelegateTime.BindUFunction(this, "OnSliderValueChanged");
@@ -60,13 +60,13 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		auto days = std::to_string(Planet->OrbitalPeriodDays);
 		PlanetDaysInfo->SetText(FText::FromString(days.c_str()));
 	}
-	if (PlanetMassTextBox)
+	if (MassTextBox)
 	{
-		if (PlanetMassTextBox->Visibility == ESlateVisibility::Hidden)
+		if (MassTextBox->Visibility == ESlateVisibility::Hidden)
 		{
-			PlanetMassTextBox->SetVisibility(ESlateVisibility::Visible);
+			MassTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		PlanetMassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->PlanetMass))));
+		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->Mass))));
 	}
 	if (InclinationTextBox)
 	{
@@ -143,13 +143,13 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 		}
 		PlanetTextInfo->SetText(FText::FromString("Object Name: Falcon 9"));
 	}
-	if (PlanetMassTextBox)
+	if (MassTextBox)
 	{
-		if (PlanetMassTextBox->Visibility == ESlateVisibility::Hidden)
+		if (MassTextBox->Visibility == ESlateVisibility::Hidden)
 		{
-			PlanetMassTextBox->SetVisibility(ESlateVisibility::Visible);
+			MassTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		PlanetMassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->RocketMass))));
+		MassTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->Mass))));
 	}
 	if (InclinationTextBox)
 	{
@@ -219,23 +219,23 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 }
 
 
-void UPlanetInfoWidget::OnCommittedPlanetMass() 
+void UPlanetInfoWidget::OnCommittedMass() 
 {
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
 		APlanet* Planet = PracaInzGameState->CurrentPlanet;
-		double mass = FCString::Atof(*PlanetMassTextBox->GetText().ToString());
+		double mass = FCString::Atof(*MassTextBox->GetText().ToString());
 		for (int i=0; i != PracaInzGameState->Planets.Num();i++)
 		{
 			APlanet* x = PracaInzGameState->Planets[i];
-			if (fabs(x->PlanetMass - mass) <= 0.0000001 * fabs(x->PlanetMass) && x!=Planet)	
+			if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x!=Planet)	
 			{
 				mass = mass + 0.0001;
 				i = -1;
 			}
 		}
-		Planet->PlanetMass = mass;
-		Planet->p = Planet->PlanetMass * Planet->Velocity;
+		Planet->Mass = mass;
+		Planet->p = Planet->Mass * Planet->Velocity;
 	}
 }
 
@@ -268,7 +268,7 @@ void UPlanetInfoWidget::OnCommittedVelocity()
 			PracaInzGameState -> CurrentDeltaTime * PracaInzGameState->BaseDistance * 
 			Planet->Velocity/Planet->Velocity.Size();
 		}
-		Planet->p = Planet->PlanetMass * Planet->Velocity;
+		Planet->p = Planet->Mass * Planet->Velocity;
 	}
 }
 
