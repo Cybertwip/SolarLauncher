@@ -126,7 +126,7 @@ void APracaInzGameState::Tick(float DeltaTime)
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
 			// Calculate the modified gravitational constant
-			double G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
+			G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
 			
 			FVector forceDirection = r.GetSafeNormal();
 			FVector F = (G_modified * astralObject->PlanetMass * otherObject->PlanetMass / distanceSquared) * forceDirection;
