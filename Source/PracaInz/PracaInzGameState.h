@@ -19,11 +19,11 @@ struct FPlanetData
 {
 	FString Name;
 	
-	float Mass; // Placeholder since mass is not given
+	double Mass; // Placeholder since mass is not given
 	
-	float Radius; // Placeholder since radius is not given
+	double Radius; // Placeholder since radius is not given
 	
-	float Distance; // Using Perihelion distance as a proxy for distance
+	double Distance; // Using Perihelion distance as a proxy for distance
 };
 
 /**
@@ -77,5 +77,8 @@ private:
 	APlanet* earth = nullptr; // Variable to store the planet with the biggest gravity pull
 	
 	APlanet* star = nullptr; // Variable to store the planet with the biggest gravity pull
+	
+	TMap<APlanet*, FVector> PlanetForces;
+
 
 };

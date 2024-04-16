@@ -81,6 +81,11 @@ void APracaInzGameState::BeginPlay()
 			break;
 		}
 	}
+	
+	for (APlanet* planet : Planets)
+	{
+		PlanetForces.Add(planet, FVector(0, 0, 0));
+	}
 }
 
 void APracaInzGameState::Tick(float DeltaTime)
@@ -90,41 +95,40 @@ void APracaInzGameState::Tick(float DeltaTime)
 	// Update the total elapsed time since the start of the simulation
 	TimeSinceStart += DeltaTime;
 	
-	TMap<APlanet*, FVector> PlanetForces;
-	for (APlanet* planet : Planets)
-	{
-		PlanetForces.Add(planet, FVector(0, 0, 0));
-	}
-	
-	// Calculate gravitational forces between all pairs of planets
-	for (APlanet* planet : Planets)
-	{
-		for (APlanet* otherPlanet : Planets)
-		{
-			if (planet == otherPlanet) continue;
-
-			FVector r = otherPlanet->GetActorLocation() - planet->GetActorLocation();
+	// Calculate gravitational forces between all pairs of planets using ParallelFor
+	ParallelFor(Planets.Num(), [this, DeltaTime](int32 index) {
+		APlanet* planet = Planets[index];
+		FVector TotalForce = FVector(0, 0, 0);
+		
+		for (int32 j = 0; j < Planets.Num(); ++j) {
+			if (index == j) continue; // Skip self
 			
+			APlanet* otherPlanet = Planets[j];
+			FVector r = otherPlanet->GetActorLocation() - planet->GetActorLocation();
 			float distanceSquared = r.SizeSquared();
 			
-			if (distanceSquared < KINDA_SMALL_NUMBER) // Check to avoid division by zero
-			{
-				continue; // Skip this iteration to avoid infinite forces
-			}
+			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
 			FVector F = (planet->PlanetMass * otherPlanet->PlanetMass) / distanceSquared * r.GetSafeNormal();
-			
 			F *= G * DeltaTime * DeltaTime;
 			
-			PlanetForces[planet] += F;
+			TotalForce += F;
 		}
-	}
-	
+		
+		PlanetForces[planet] = TotalForce;
+	}, false); // True to force this to be a blocking call
+
+	ParallelFor(Planets.Num(), [this, DeltaTime](int32 index) {
+		APlanet* planet = Planets[index];
+		
+		planet->UpdatePlanetPosition(DeltaTime, PlanetForces[planet]);
+
+	}, false); // True to force this to be a blocking call
+
 	for (APlanet* planet : Planets)
 	{
-		planet->UpdatePlanetPosition(DeltaTime, PlanetForces[planet]);
+		planet->Tick(DeltaTime);
 	}
-
 	
 	if (earth == nullptr || star == nullptr)
 	{
@@ -277,7 +281,7 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		}
 		
 		// Check capacity to avoid exceeding limits
-		if (Planets.Num() >= 800)
+		if (Planets.Num() >= 1250)
 		{
 			break;  // Stop processing if too many planets
 		}
@@ -356,11 +360,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 					}
 					
 					float StarRadius = FCString::Atof(*StarRadiusStr);
-					
-					if (Planets.Num() >= 1600)
-					{
-						break;  // Stop processing if too many planets
-					}
 
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
 				}
@@ -418,6 +417,9 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 		NewPlanet->Inclination = 0.0039;
-		NewPlanet->OrbitColor = FColor(255, 255, 255, 255); // Setting a default color, adjust as needed
+	
+		NewPlanet->OrbitColor = FColor(0, 255, 0, 255); // Setting a default color, adjust as needed
+			
+		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 	}
 }

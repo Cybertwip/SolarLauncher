@@ -17,8 +17,7 @@
 // Sets default values
 APlanet::APlanet()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	PlanetMesh = CreateDefaultSubobject<UStaticMeshComponent>("PlanetMesh");
 	PlanetMesh->SetAbsolute(true, true, true);
@@ -87,7 +86,6 @@ void APlanet::InitialSetup(){
 		Velocity = InitialVelocity;
 	}
 	p = InitialVelocity * PlanetMass;
-
 }
 
 // Called every frame
