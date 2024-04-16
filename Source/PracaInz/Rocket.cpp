@@ -259,8 +259,8 @@ void ARocket::AdjustThrustAsNearingTarget()
 	float Distance = FVector::Dist(GetActorLocation(), TargetLocation);
 	
 	// Define the distance range within which to start reducing thrust
-	float StartReduceDistance = 500.0f; // Start reducing thrust at this distance
-	float MinReduceDistance = 100.0f;    // Minimum distance where thrust should be at its minimum
+	float StartReduceDistance = 1500.0f; // Start reducing thrust at this distance
+	float MinReduceDistance = 1000.0f;    // Minimum distance where thrust should be at its minimum
 	
 	if (Distance < StartReduceDistance)
 	{
