@@ -28,7 +28,9 @@ ARocket::ARocket()
 	// Initialize rocket properties
 	PlanetMass = 1.f;
 	InitialVelocity = FVector::ZeroVector;
-	ThrustForce = 10.0f;
+	MaxThrustForce = 10.0;
+	
+	ThrustForce = MaxThrustForce;
 	MaxSpeed = 5000.f;
 	RocketColor = FColor::Blue;
 	
@@ -249,12 +251,29 @@ void ARocket::AdjustOrientationTowardsMovingDirection()
 
 void ARocket::AdjustThrustAsNearingTarget()
 {
+	if (!bIsThrusterActive) {
+		return;
+	}
+	
 	FVector TargetLocation = Target->GetActorLocation();
 	float Distance = FVector::Dist(GetActorLocation(), TargetLocation);
 	
-	// Reduce thrust as the rocket approaches the target to smooth out the approach
-	if (Distance < 5000.0f)  // Arbitrary distance threshold
+	// Define the distance range within which to start reducing thrust
+	float StartReduceDistance = 3500.0f; // Start reducing thrust at this distance
+	float MinReduceDistance = 200.0f;    // Minimum distance where thrust should be at its minimum
+	
+	if (Distance < StartReduceDistance)
 	{
-		ThrustForce *= 0.2f;  // Reduce thrust by 10% as an example
+		
+		// Calculate the lerp factor based on the current distance
+		float LerpFactor = (Distance - MinReduceDistance) / (StartReduceDistance - MinReduceDistance);
+		LerpFactor = FMath::Clamp(LerpFactor, 0.0f, 1.0f); // Ensure the lerp factor stays within the valid range
+		
+		// Apply the Cubic Ease Out formula
+		LerpFactor = 1 - FMath::Pow(1 - LerpFactor, 3);
+		
+		// Interpolate the thrust force between its current value and the minimum value
+		ThrustForce = ThrustForce * LerpFactor * 0.5f;
+
 	}
 }

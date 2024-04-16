@@ -43,7 +43,10 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float ThrustForce;
-	
+
+	UPROPERTY(EditAnywhere)
+	float MaxThrustForce;
+
 	UPROPERTY(EditAnywhere)
 	float MaxSpeed;
 	
