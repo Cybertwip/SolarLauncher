@@ -10,8 +10,6 @@
 #include "AstralObject.h"
 #include "Planet.generated.h"
 
-class APracaInzGameState;
-
 UCLASS()
 class PRACAINZ_API APlanet : public AAstralObject
 {
@@ -70,7 +68,6 @@ public:
 
 	void InitialSetup();
 	
-	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
 	void DestroyPlanet();
 	void InitialCalculations(float DeltaTime);
 	void OnTriggerPressed();

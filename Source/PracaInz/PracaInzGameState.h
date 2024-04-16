@@ -58,7 +58,7 @@ public:
 	FVector CentralOrbitPoint = FVector(0.0f, 0.0f, 0.0f);
 	
 	//		int64 SecondsInSimulation = 86400;
-	int64 SecondsInSimulation = 16640000;
+	int64 SecondsInSimulation = 86400;
 	//int64 SecondsInSimulation = 166400;
 	double CurrentDeltaTime = 1/60;
 	

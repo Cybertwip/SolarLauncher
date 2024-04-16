@@ -7,6 +7,8 @@
 
 #include "Kismet/GameplayStatics.h"
 
+#include <cmath> // for pow function
+
 namespace {
 FVector CalculateInitialPositionParsecs(double Distance)
 {
@@ -82,6 +84,10 @@ void APracaInzGameState::BeginPlay()
 		}
 	}
 	
+	Objects.Add(Rocket);
+	
+	AstralForces.Add(Rocket, FVector(0, 0, 0));
+
 	for (APlanet* planet : Planets)
 	{
 		AstralForces.Add(planet, FVector(0, 0, 0));
@@ -92,92 +98,53 @@ void APracaInzGameState::BeginPlay()
 			Rocket->Target = planet;
 		}
 	}
-	
-	Objects.Add(Rocket);
-	
-	AstralForces.Add(Rocket, FVector(0, 0, 0));
 }
+
 
 void APracaInzGameState::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	// Update the total elapsed time since the start of the simulation
-	TimeSinceStart += DeltaTime;
+	const double c = 3e8; // Speed of light in meters per second
+	double G_modified;
 	
-	// Calculate gravitational forces between all pairs of planets using ParallelFor
-	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AAstralObject* astralObject = Objects[index];
-		FVector TotalForce = FVector(0, 0, 0);
-		
-		for (int32 j = 0; j < Objects.Num(); ++j) {
-			if (index == j) continue; // Skip self
-			
+	// Reset forces for all objects
+	for (AAstralObject* obj : Objects) {
+		AstralForces[obj] = FVector(0, 0, 0);
+	}
+	
+	// Calculate gravitational forces between all pairs of planets
+	for (int32 i = 0; i < Objects.Num(); ++i) {
+		AAstralObject* astralObject = Objects[i];
+		for (int32 j = i + 1; j < Objects.Num(); ++j) {
 			AAstralObject* otherObject = Objects[j];
 			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
+			FVector v_rel = otherObject->GetVelocity() - astralObject->GetVelocity();
 			double distanceSquared = r.SizeSquared();
+			double relativeSpeedSquared = v_rel.SizeSquared();
 			
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
-			FVector F = (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
-			F *= G * DeltaTime * DeltaTime;
+			// Calculate the modified gravitational constant
+			G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
 			
-			TotalForce += F;
+			FVector forceDirection = r.GetSafeNormal();
+			FVector F = (G_modified * astralObject->PlanetMass * otherObject->PlanetMass / distanceSquared) * forceDirection;
+			
+			// Apply the gravitational force symmetrically
+			AstralForces[astralObject] += F * DeltaTime;
+			AstralForces[otherObject] -= F * DeltaTime;
 		}
-		
-		AstralForces[astralObject] = TotalForce;
-	}, false);
-
-	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AAstralObject* astralObject = Objects[index];
-		
-		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
-
-	}, false);
+	}
 	
-	for (AAstralObject* astralObject : Objects)
-	{
+	// Update precomputed forces and simulate movement
+	for (AAstralObject* astralObject : Objects) {
+		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
 		astralObject->Tick(DeltaTime);
 	}
-	
-	if (earth == nullptr || star == nullptr)
-	{
-		return;
-	}
-
-	auto starLocation = star->GetActorLocation();
-	auto planetLocation = earth->GetActorLocation();
-	// Calculate the distance between the objects
-	FVector relativePosition = planetLocation - starLocation;
-	const double relativeDistance = relativePosition.Size();
-	// Calculate the elevation angle between spins to get the elliptical
-	const double inclinationAngle = FMath::RadiansToDegrees(FMath::Acos(relativePosition.Z / relativeDistance));
-	
-	// Apply Kepler's third law assuming circular orbit
-	// Convert inclination angle to radians
-	const double inclinationRadians = FMath::DegreesToRadians(earth->Inclination);
-	
-	// Adjust orbital speed for elliptical orbit
-	const double orbitalSpeedElliptical = earth->Velocity.Size() * FMath::Cos(inclinationRadians);
-	
-	// Calculate semi-major axis (assuming a circular orbit for simplicity)
-	const double timeScaled = TimeSinceStart * TimeSinceStart * SecondsInSimulation;
-	
-	const double semiMajorAxis = (G * star->PlanetMass * timeScaled) / (4 * PI * PI);
-	
-	// Calculate semi-minor axis for elliptical orbit
-	const double semiMinorAxis = semiMajorAxis * FMath::Sin(inclinationRadians);
-	
-	// Calculate the orbital period for elliptical orbit using Kepler's third law
-	const double orbitalPeriodSecondsElliptical = 2 * PI * FMath::Sqrt(FMath::Pow(semiMajorAxis, 3) / (G * (star->PlanetMass + earth->PlanetMass)));
-	
-	// Convert orbital period to days for elliptical orbit
-	earth->OrbitalPeriodDays = orbitalPeriodSecondsElliptical / (24.0 * 60.0 * 60.0);
-	
-	if (earth->OrbitalPeriodDays > 365) {
-		earth->OrbitalPeriodDays = fmod(earth->OrbitalPeriodDays, 365.0); // Reset the day count when it exceeds 365
-	}
 }
+
+
 
 void APracaInzGameState::SelectNextPlanet()
 {

@@ -88,8 +88,6 @@ void APlanet::InitialSetup(){
 		Velocity = InitialVelocity;
 		
 		p = InitialVelocity * PlanetMass;
-		
-		PerformInitialCalculations(0.016, PracaInzGameState);
 	} else {
 		p = InitialVelocity * PlanetMass;
 	}
@@ -121,15 +119,17 @@ void APlanet::Tick(float DeltaTime)
 		DestroyPlanet();  // Handle planet destruction
 	} else {
 		
+		// Get the current position of the planet.
 		FVector currentPosition = GetActorLocation();
 		
-		// Calculate the new momentum based on the current one and the time jump
-		FVector New_p = p + (PrecomputedForce * GameState->SecondsInSimulation);
+		// Calculate the new momentum based on the current one and the time jump, including DeltaTime in the force application.
+		FVector New_p = p + PrecomputedForce * DeltaTime * GameState->SecondsInSimulation;
 		
-		// Calculate the new velocity
+		// Calculate the new velocity from the new momentum.
 		Velocity = New_p / PlanetMass;
 		
-		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
+		// Update the planet's position based on the new velocity and the time delta.
+		SetActorLocation(currentPosition + (Velocity * DeltaTime * GameState->SecondsInSimulation));
 
 		// Remember the newly calculated momentum
 		p = New_p;
@@ -144,20 +144,6 @@ void APlanet::Tick(float DeltaTime)
 		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), OrbitColor, false, 1);
 	}
 }
-
-void APlanet::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
-{
-	FVector currentPosition = GetActorLocation();
-	FVector referenceDirection = FVector(0, 0, 1);
-	// Apply initial transformations and calculations
-	currentPosition += FVector(0, 1, 0) * Inclination;  // Adjust position slightly by inclination along the Z-axis if needed
-	p *= DeltaTime;
-	Velocity *= DeltaTime;
-	p = p.RotateAngleAxis(0, referenceDirection);
-	Velocity = Velocity.RotateAngleAxis(0, referenceDirection);
-	SetActorLocation(currentPosition);
-}
-
 
 void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 {
@@ -215,7 +201,7 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 //		if (APlanet* Planet = Cast<APlanet>(OtherActor))
 //		{
 //			/*...*/
-//			if (Planet->PlanetMass > PlanetMass)
+//			if (Planet->Mass > Mass)
 //			{
 //				if(PracaInzGameState->CurrentPlanet==this)
 //				{ 
@@ -231,20 +217,20 @@ void APlanet::OnSelected(AActor* Target, FKey ButtonPressed)
 //				bIsBeingDestroyed = true;
 //			}
 //			/*...*/
-//			else if(Planet->PlanetMass < PlanetMass)
+//			else if(Planet->Mass < Mass)
 //			{
 //				p += Planet->p;
-//				double PlanetMass = PlanetMass + Planet->PlanetMass;
+//				double mass = Mass + Planet->Mass;
 //				for (int i = 0; i != PracaInzGameState->Planets.Num(); i++)
 //				{
 //					APlanet* x = PracaInzGameState->Planets[i];
-//					if (fabs(x->PlanetMass - PlanetMass) <= 0.0000001 * fabs(x->PlanetMass) && x != Planet)
+//					if (fabs(x->Mass - mass) <= 0.0000001 * fabs(x->Mass) && x != Planet)
 //					{
-//						PlanetMass = PlanetMass + 0.0001;
+//						mass = mass + 0.0001;
 //						i = -1;
 //					}
 //				}
-//				PlanetMass = PlanetMass;
+//				Mass = mass;
 //				if (PracaInzGameState->CurrentPlanet == this)
 //				{
 //					if (APracaInzHUD* PracaInzHUD = Cast<APracaInzHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
@@ -262,29 +248,6 @@ void APlanet::DestroyPlanet()
 	Destroy();
 }
 
-void APlanet::InitialCalculations(float DeltaTime)
-{
-	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
-	{
-		FVector r;
-		FVector F = FVector(0, 0, 0);
-		double distance;
-		for (AAstralObject* x : PracaInzGameState->Planets)
-		{
-			if (x == this)
-			{
-				continue;
-			}
-			else
-			{
-				r = x->GetActorLocation() - GetActorLocation();
-				distance = r.Size() * r.Size() * r.Size();
-				F += (((PlanetMass) * (x->PlanetMass)) / (distance)) * r;
-			}
-		}
-		F *= PracaInzGameState->G * DeltaTime * DeltaTime;
-	}
-}
 FRotator MyLookRotation(FVector forward, FVector upDirection)
 {
 

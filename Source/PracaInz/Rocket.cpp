@@ -66,8 +66,6 @@ void ARocket::InitialSetup(){
 		Velocity = InitialVelocity;
 		
 		p = InitialVelocity * PlanetMass;
-		
-		PerformInitialCalculations(0.016, PracaInzGameState);
 	} else {
 		p = InitialVelocity * PlanetMass;
 	}
@@ -75,19 +73,6 @@ void ARocket::InitialSetup(){
 
 void ARocket::Launch(){
 	bIsThrusterActive = true;
-}
-
-void ARocket::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
-{
-	FVector currentPosition = GetActorLocation();
-	FVector referenceDirection = FVector(0, 0, 1);
-	// Apply initial transformations and calculations
-	currentPosition += FVector(0, 1, 0) * Inclination;  // Adjust position slightly by inclination along the Z-axis if needed
-	p *= DeltaTime;
-	Velocity *= DeltaTime;
-	p = p.RotateAngleAxis(0, referenceDirection);
-	Velocity = Velocity.RotateAngleAxis(0, referenceDirection);
-	SetActorLocation(currentPosition);
 }
 
 
@@ -131,10 +116,10 @@ void ARocket::Tick(float DeltaTime)
 		FVector TargetLocation = Target->GetActorLocation();
 		FVector CurrentPosition = GetActorLocation();
 		FVector DirectionToTarget = (TargetLocation - CurrentPosition).GetSafeNormal();
-		FVector Thrust = DirectionToTarget * ThrustForce;
+		Thrust = DirectionToTarget * ThrustForce;
 
 		// Apply gravitational scaling and time squared (as acceleration needs time squared)
-		Thrust *= GameState->G * DeltaTime * DeltaTime;
+//		Thrust *= GameState->G * DeltaTime * DeltaTime;
 		
 		TotalForce += Thrust;
 	}
@@ -144,24 +129,19 @@ void ARocket::Tick(float DeltaTime)
 	{
 		DestroyRocket();  // Handle planet destruction
 	} else {
-		
 		FVector currentPosition = GetActorLocation();
 		
-		// Calculate the new momentum based on the current one and the time jump
-		FVector New_p = p + (TotalForce * GameState->SecondsInSimulation);
+		FVector New_p = p + PrecomputedForce * DeltaTime * GameState->SecondsInSimulation;
 		
-		// Calculate the new velocity
+		// Calculate the new velocity from the new momentum.
 		Velocity = New_p / PlanetMass;
 		
-		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
-		
-		AdjustThrustAsNearingTarget();
-		AdjustOrientationTowardsTarget();
-		AdjustOrientationTowardsMovingDirection();
+		// Update the planet's position based on the new velocity and the time delta.
+		SetActorLocation(currentPosition + (Velocity * DeltaTime * GameState->SecondsInSimulation));
 		
 		// Remember the newly calculated momentum
 		p = New_p;
-		
+
 		// Optional: Update rotation based on new position if necessary
 //		FRotator NewRotation = GetActorRotation();
 		
@@ -259,8 +239,8 @@ void ARocket::AdjustThrustAsNearingTarget()
 	float Distance = FVector::Dist(GetActorLocation(), TargetLocation);
 	
 	// Define the distance range within which to start reducing thrust
-	float StartReduceDistance = 1500.0f; // Start reducing thrust at this distance
-	float MinReduceDistance = 1000.0f;    // Minimum distance where thrust should be at its minimum
+	float StartReduceDistance = 3500.0f; // Start reducing thrust at this distance
+	float MinReduceDistance = 200.0f;    // Minimum distance where thrust should be at its minimum
 	
 	if (Distance < StartReduceDistance)
 	{

@@ -106,8 +106,6 @@ public:
 	
 	void InitialSetup();
 	
-	void PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState);
-	
 	// Destroy the rocket
 	void DestroyRocket();
 	
