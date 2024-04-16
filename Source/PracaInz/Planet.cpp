@@ -48,13 +48,13 @@ APlanet::APlanet()
 		UE_LOG(LogTemp, Error, TEXT("Failed to load Sun material for PlanetMesh."));
 	}
 
-	InitialVelocity.X = 0.f;
-	InitialVelocity.Y = 0.f;
-	InitialVelocity.Z = 0.f;
+	InitialVelocity.X = 0.00000000000;
+	InitialVelocity.Y = 0.00000000000;
+	InitialVelocity.Z = 0.00000000000;
 	p = FVector(0, 0, 0);
-	PlanetMass = 1;
-	Diameter = 1;
-	Inclination = 0;
+	PlanetMass = 1 / 5.9722e24;
+	Diameter = 1 / 6371.0;
+	Inclination = 0.0039;
 	
 	OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
 }
@@ -84,8 +84,14 @@ void APlanet::InitialSetup(){
 	{
 		InitialVelocity *= PracaInzGameState->BaseDistance;
 		Velocity = InitialVelocity;
+		
+		p = InitialVelocity * PlanetMass;
+		
+		PerformInitialCalculations(0.016, PracaInzGameState);
+	} else {
+		p = InitialVelocity * PlanetMass;
 	}
-	p = InitialVelocity * PlanetMass;
+
 }
 
 // Called every frame
@@ -105,18 +111,6 @@ void APlanet::Tick(float DeltaTime)
 	if (!GameState)
 	{
 		return;  // Early exit if game state is not accessible
-	}
-	
-	// Set current delta time in game state
-	GameState->CurrentDeltaTime = DeltaTime;
-	
-	// Perform first-time calculations
-	if (bFirstCalculations)
-	{
-		PerformInitialCalculations(DeltaTime, GameState);
-		
-//		UpdatePlanetPosition(DeltaTime, p);
-		bFirstCalculations = false;  // Ensure this block runs only once
 	}
 	
 	// Update planet position if it's not being destroyed
@@ -152,21 +146,20 @@ void APlanet::Tick(float DeltaTime)
 void APlanet::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
 {
 	FVector currentPosition = GetActorLocation();
-	FVector referenceDirection = FVector(0, 0, 1);  // Typically the 'up' direction in UE
-	
+	FVector referenceDirection = FVector(0, 0, 1);
 	// Apply initial transformations and calculations
-	currentPosition = currentPosition.RotateAngleAxis(0, referenceDirection);  // Rotate by 0 degrees, consider dynamic rotation later
+	currentPosition += FVector(0, 1, 0) * Inclination;  // Adjust position slightly by inclination along the Z-axis if needed
 	p *= DeltaTime;
 	Velocity *= DeltaTime;
 	p = p.RotateAngleAxis(0, referenceDirection);
 	Velocity = Velocity.RotateAngleAxis(0, referenceDirection);
 	SetActorLocation(currentPosition);
 	
-	// Calculate inclination effects
-	FVector relativeDirection = (GameState->Planets.Num() > 0) ? (currentPosition - GameState->Planets[0]->GetActorLocation()) : FVector::UpVector;
-	relativeDirection.Normalize();
-	p = p.RotateAngleAxis(Inclination, relativeDirection);
-	Velocity = Velocity.RotateAngleAxis(Inclination, relativeDirection);
+//	// Calculate inclination effects
+//	FVector relativeDirection = (GameState->Planets.Num() > 0) ? (currentPosition - GameState->Planets[0]->GetActorLocation()) : FVector::UpVector;
+//	relativeDirection.Normalize();
+//	p = p.RotateAngleAxis(Inclination, relativeDirection);
+//	Velocity = Velocity.RotateAngleAxis(Inclination, relativeDirection);
 }
 
 

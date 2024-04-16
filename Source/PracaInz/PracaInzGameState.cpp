@@ -8,17 +8,17 @@
 #include "Kismet/GameplayStatics.h"
 
 namespace {
-FVector CalculateInitialPositionParsecs(float Distance)
+FVector CalculateInitialPositionParsecs(double Distance)
 {
 	// Placeholder for a more complex calculation
 	// Example: Convert parsec distance to game world units, assuming 1 parsec = 1000 units
-	float GameWorldDistance = Distance * 206265; // Scaled parsecs
+	double GameWorldDistance = Distance * 206265; // Scaled parsecs
 	return FVector(2770 + GameWorldDistance, -14390, 0.0);
 }
 
-FVector CalculateInitialPositionAU(float Distance) {
+FVector CalculateInitialPositionAU(double Distance) {
 	// Example: Convert parsec distance to game world units, assuming 1 AU = 1000 units
-	float GameWorldDistance = Distance * 1000; // Scaled AUs
+	double GameWorldDistance = Distance * 1000; // Scaled AUs
 	
 	// Return the FVector with randomized position
 	return FVector(2770 + GameWorldDistance, -14390, 0.0);
@@ -32,15 +32,15 @@ APracaInzGameState::APracaInzGameState()
 
 void APracaInzGameState::BeginPlay()
 {
-	FName levelName = FName(*GetWorld()->GetName());
-	if (levelName == FName("SolarSystem"))
-	{
-		BaseDistance = (1.0 / 1000.0) * 149597870700;
-	}
-	else
-	{
-		BaseDistance = 1 / (1E3);
-	}
+//	FName levelName = FName(*GetWorld()->GetName());
+//	if (levelName == FName("SolarSystem"))
+//	{
+////		BaseDistance = (1.0 / 1000.0) * 149597870700;
+//	}
+//	else
+//	{
+//		BaseDistance = 1 / (1E3);
+//	}
 	
 	FString FileName = FPaths::ProjectContentDir() + TEXT("Data/nea_extended.json");
 	FString JsonData;
@@ -105,7 +105,7 @@ void APracaInzGameState::Tick(float DeltaTime)
 			
 			APlanet* otherPlanet = Planets[j];
 			FVector r = otherPlanet->GetActorLocation() - planet->GetActorLocation();
-			float distanceSquared = r.SizeSquared();
+			double distanceSquared = r.SizeSquared();
 			
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
@@ -116,15 +116,13 @@ void APracaInzGameState::Tick(float DeltaTime)
 		}
 		
 		PlanetForces[planet] = TotalForce;
-	}, false); // True to force this to be a blocking call
-
+	}, false); 
 	ParallelFor(Planets.Num(), [this, DeltaTime](int32 index) {
 		APlanet* planet = Planets[index];
 		
 		planet->UpdatePlanetPosition(DeltaTime, PlanetForces[planet]);
 
-	}, false); // True to force this to be a blocking call
-
+	}, false);
 	for (APlanet* planet : Planets)
 	{
 		planet->Tick(DeltaTime);
@@ -143,11 +141,11 @@ void APracaInzGameState::Tick(float DeltaTime)
 	FVector relativePosition = planetLocation - starLocation;
 	const double relativeDistance = relativePosition.Size();
 	// Calculate the elevation angle between spins to get the elliptical
-	const float inclinationAngle = FMath::RadiansToDegrees(FMath::Acos(relativePosition.Z / relativeDistance));
+	const double inclinationAngle = FMath::RadiansToDegrees(FMath::Acos(relativePosition.Z / relativeDistance));
 	
 	// Apply Kepler's third law assuming circular orbit
 	// Convert inclination angle to radians
-	const float inclinationRadians = FMath::DegreesToRadians(earth->Inclination);
+	const double inclinationRadians = FMath::DegreesToRadians(earth->Inclination);
 	
 	// Adjust orbital speed for elliptical orbit
 	const double orbitalSpeedElliptical = earth->Velocity.Size() * FMath::Cos(inclinationRadians);
@@ -261,7 +259,7 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 		if (PlanetObject->TryGetNumberField("H", H))
 		{
 			// Calculate Diameter and Mass based on H
-			const float TypicalAlbedo = 0.15;
+			const double TypicalAlbedo = 0.15;
 			double Diameter = std::pow(10, (3.123 - H / 5));
 
 			PlanetData.Radius = Diameter / 2.0;  // Radius in kilometers, convert to Earth radii later
@@ -321,7 +319,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 				continue; // Skip to the next system
 			}
 			
-			float Distance = FCString::Atof(*DistanceStr);
+			double Distance = FCString::Atof(*DistanceStr);
 			
 			for (const FXmlNode* StarNode : SystemNode->GetChildrenNodes())
 			{
@@ -347,7 +345,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 						continue; // Skip to the next star
 					}
 					
-					float StarMass = FCString::Atof(*StarMassStr);
+					double StarMass = FCString::Atof(*StarMassStr);
 					
 					FString StarRadiusStr;
 					if (const FXmlNode* RadiusNode = StarNode->FindChildNode("radius"))
@@ -359,7 +357,7 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 						continue; // Skip to the next star
 					}
 					
-					float StarRadius = FCString::Atof(*StarRadiusStr);
+					double StarRadius = FCString::Atof(*StarRadiusStr);
 
 					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
 				}
@@ -373,10 +371,10 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 }
 
 
-void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float Distance)
+void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double Mass, double Radius, double Inclination, double Distance)
 {
 	// Convert radius to diameter
-	float Diameter = Radius * 2.0f;
+	double Diameter = Radius * 2.0f;
 	
 	// Configuration for the new planet actor
 	FActorSpawnParameters SpawnParams;
@@ -402,7 +400,7 @@ void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, float Mass,
 
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
-	float Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
+	double Diameter = PlanetData.Radius * 2.0f; // Convert radius to diameter
 	FVector InitialPosition = CalculateInitialPositionAU(PlanetData.Distance); // Calculate initial position based on distance
 	
 	FActorSpawnParameters SpawnParams;

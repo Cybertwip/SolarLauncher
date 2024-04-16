@@ -48,7 +48,7 @@ public:
 	//base mass = moon mass
 	//base distance = 100 000 km
 	UPROPERTY(EditAnywhere, Category = "Components")
-	double BaseDistance = 1/(1.5E5);
+	double BaseDistance = 1/(1.5E5 * 1.766);
 	const double G = 6.67430e-11 * 1.766;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orbit")
@@ -57,14 +57,14 @@ public:
 	//		int64 SecondsInSimulation = 86400;
 	int64 SecondsInSimulation = 16640000;
 	//int64 SecondsInSimulation = 166400;
-	float CurrentDeltaTime = 1/60;
+	double CurrentDeltaTime = 1/60;
 	
 	
 	//VR
 	APlanet* CurrentPlanetVR;
 	FVector CurrentPlanetVRScale;
 	
-	float TimeSinceStart = 0.0f;
+	double TimeSinceStart = 0.0f;
 	
 private:
 	void ParseJsonData(const FString& JsonData);
@@ -72,7 +72,7 @@ private:
 	void OnHttpResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	void ProcessXmlData(const FString& XmlData);
 	void SpawnPlanetFromJsonData(const FPlanetData& PlanetData);
-	void SpawnPlanetFromXmlData(const FString& Name, float Mass, float Radius, float Inclination, float distance);
+	void SpawnPlanetFromXmlData(const FString& Name, double Mass, double Radius, double Inclination, double distance);
 	
 	APlanet* earth = nullptr; // Variable to store the planet with the biggest gravity pull
 	

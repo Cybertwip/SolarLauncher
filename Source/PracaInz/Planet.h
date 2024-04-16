@@ -36,9 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	float RotationSpeed;
 	UPROPERTY(EditAnywhere, Category = "Components")
-	float Diameter;
+	double Diameter;
 	UPROPERTY(EditAnywhere, Category = "Components")
-	float Inclination;
+	double Inclination;
 	UPROPERTY(EditAnywhere, Category = "Components")
 	FString Name;
 	UPROPERTY(EditAnywhere, Category = "Components")
@@ -56,8 +56,6 @@ public:
 	FInputActionBinding* inputActionBindingRight;
 		
 	bool bIsBeingDestroyed = false;
-	// zmienna do sprawdzenia, czy wykonac pierwsze obliczenia
-	bool bFirstCalculations = true;
 	FTimerHandle DestroyTimer;
 	
 	UFUNCTION()
