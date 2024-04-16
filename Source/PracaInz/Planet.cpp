@@ -49,12 +49,13 @@ APlanet::APlanet()
 	}
 
 	InitialVelocity.X = 0.00000000000;
-	InitialVelocity.Y = 0.00000000000;
+	InitialVelocity.Y = 29,780001;
 	InitialVelocity.Z = 0.00000000000;
 	p = FVector(0, 0, 0);
-	PlanetMass = 1 / 5.9722e24;
-	Diameter = 1 / 6371.0;
+	PlanetMass = 1;
+	Diameter = 0.7;
 	Inclination = 0.0039;
+	RotationSpeed = -0.0041;
 	
 	OrbitColor = FColor(1.0, 1.0, 0.0, 1.0);
 }

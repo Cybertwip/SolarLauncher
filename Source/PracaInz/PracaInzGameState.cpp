@@ -266,10 +266,12 @@ void APracaInzGameState::ParseJsonData(const FString& JsonData)
 						
 			// Assuming density for mass calculation
 			double Density = 2500;  // kg/m³, assuming a rocky composition
-			double Volume = (4.0 / 3.0) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius from km to meters
-			PlanetData.Mass = (Volume * Density) / 5.9722e24;
 			
-			PlanetData.Radius /= 6371.0;
+			PlanetData.Radius *= BaseDistance;
+
+			double Volume = (4.0 / 3.0) * PI * FMath::Pow(PlanetData.Radius * 1000, 3); // Convert radius from km to meters
+			PlanetData.Mass = (Volume * Density);
+			
 
 		}
 		else
@@ -414,10 +416,8 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
 		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
-		NewPlanet->Inclination = 0.0039;
-	
+		NewPlanet->InitialVelocity = FVector(0, 13, 0);
+		NewPlanet->InitialSetup();
 		NewPlanet->OrbitColor = FColor(0, 255, 0, 255); // Setting a default color, adjust as needed
-			
-		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 	}
 }
