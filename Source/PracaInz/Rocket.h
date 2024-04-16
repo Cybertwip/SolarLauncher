@@ -15,7 +15,7 @@ class APracaInzGameState;
 
 
 UCLASS()
-class PRACAINZ_API ARocket : public AstralObject
+class PRACAINZ_API ARocket : public AAstralObject
 {
 	GENERATED_BODY()
 	

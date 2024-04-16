@@ -269,7 +269,7 @@ void APlanet::InitialCalculations(float DeltaTime)
 		FVector r;
 		FVector F = FVector(0, 0, 0);
 		double distance;
-		for (AstralObject* x : PracaInzGameState->Planets)
+		for (AAstralObject* x : PracaInzGameState->Planets)
 		{
 			if (x == this)
 			{

@@ -7,17 +7,19 @@
 #include "AstralObject.generated.h"
 
 UCLASS()
-class PRACAINZ_API AstralObject : public AActor
+class PRACAINZ_API AAstralObject : public AActor
 {
 	GENERATED_BODY()
 
 	public:
-	AstralObject();
+	AAstralObject();
 		
 	UPROPERTY(EditAnywhere, Category = "Components")
 	double Mass;
 
 	FVector PrecomputedForce;
+	
+	virtual void Tick(float DeltaTime) override {}
 
 	void UpdatePrecomputedForce(FVector TotalForce);
 };

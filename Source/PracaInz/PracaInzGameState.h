@@ -42,7 +42,7 @@ public:
 	void SelectRocket();
 
 	TArray<APlanet*> Planets;
-	TArray<AstralObject*> Objects;
+	TArray<AAstralObject*> Objects;
 	ACameraPawn* Camera;
 	APlanet* CurrentPlanet;
 	ARocket* Rocket;
@@ -79,7 +79,7 @@ private:
 	
 	APlanet* star = nullptr; // Variable to store the planet with the biggest gravity pull
 	
-	TMap<AstralObject*, FVector> AstralForces;
+	TMap<AAstralObject*, FVector> AstralForces;
 
 
 };

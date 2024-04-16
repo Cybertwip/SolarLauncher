@@ -103,13 +103,13 @@ void APracaInzGameState::Tick(float DeltaTime)
 	
 	// Calculate gravitational forces between all pairs of planets using ParallelFor
 	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AstralObject* astralObject = Objects[index];
+		AAstralObject* astralObject = Objects[index];
 		FVector TotalForce = FVector(0, 0, 0);
 		
 		for (int32 j = 0; j < Objects.Num(); ++j) {
 			if (index == j) continue; // Skip self
 			
-			AstralObject* otherObject = Objects[j];
+			AAstralObject* otherObject = Objects[j];
 			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
 			double distanceSquared = r.SizeSquared();
 			
@@ -124,15 +124,15 @@ void APracaInzGameState::Tick(float DeltaTime)
 		AstralForces[astralObject] = TotalForce;
 	}, false);
 	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AstralObject* astralObject = Objects[index];
+		AAstralObject* astralObject = Objects[index];
 		
 		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
 
 	}, false);
 	
-	for (AstralObject* planet : Objects)
+	for (AAstralObject* astralObject : Objects)
 	{
-		planet->Tick(DeltaTime);
+		astralObject->Tick(DeltaTime);
 	}
 	
 	if (earth == nullptr || star == nullptr)
