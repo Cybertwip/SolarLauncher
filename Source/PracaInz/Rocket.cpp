@@ -153,6 +153,7 @@ void ARocket::Tick(float DeltaTime)
 		
 		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
 		
+		AdjustThrustAsNearingTarget();
 		AdjustOrientationTowardsTarget();
 		AdjustOrientationTowardsMovingDirection();
 		
