@@ -28,12 +28,12 @@ ARocket::ARocket()
 	// Initialize rocket properties
 	PlanetMass = 1.f;
 	InitialVelocity = FVector::ZeroVector;
-	ThrustForce = 1.0f;
+	ThrustForce = 10.0f;
 	MaxSpeed = 5000.f;
 	RocketColor = FColor::White;
 	
 	// Set initial state
-	bIsThrusterActive = true; // Start with thruster active
+	bIsThrusterActive = false; // Start with thruster active
 	
 }
 
@@ -41,7 +41,6 @@ ARocket::ARocket()
 void ARocket::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	
 	//	PlanetMesh->OnComponentBeginOverlap.AddDynamic(this, &APlanet::OnOverlapBegin);
 	//	PlanetMesh->OnComponentEndOverlap.AddDynamic(this, &APlanet::OnOverlapEnd);
@@ -70,9 +69,11 @@ void ARocket::InitialSetup(){
 	} else {
 		p = InitialVelocity * PlanetMass;
 	}
-	
 }
 
+void ARocket::Launch(){
+	bIsThrusterActive = true;
+}
 
 void ARocket::PerformInitialCalculations(float DeltaTime, APracaInzGameState* GameState)
 {
@@ -107,6 +108,29 @@ void ARocket::Tick(float DeltaTime)
 		return;  // Early exit if game state is not accessible
 	}
 	
+	
+	FVector TotalForce = PrecomputedForce;
+	FVector Thrust;
+	
+	if (bIsThrusterActive)
+	{
+		// Primary forward thrust
+		Thrust = GetActorForwardVector() * ThrustForce;
+		
+		// Example control input or AI for lateral and vertical thrust:
+		float LateralThrustMultiplier = 1.0f; // Determine based on need to move right or left
+		float VerticalThrustMultiplier = 1.0f; // Determine based on need to move up or down
+		
+		// Adding lateral and vertical thrust based on right and up vectors
+		Thrust += GetActorRightVector() * (ThrustForce * LateralThrustMultiplier);
+		Thrust += GetActorUpVector() * (ThrustForce * VerticalThrustMultiplier);
+		
+		// Apply gravitational scaling and time squared (as acceleration needs time squared)
+		Thrust *= GameState->G * DeltaTime * DeltaTime;
+		
+		TotalForce += Thrust;
+	}
+
 	// Update planet position if it's not being destroyed
 	if (bIsBeingDestroyed)
 	{
@@ -116,21 +140,20 @@ void ARocket::Tick(float DeltaTime)
 		FVector currentPosition = GetActorLocation();
 		
 		// Calculate the new momentum based on the current one and the time jump
-		FVector New_p = p + (PrecomputedForce * GameState->SecondsInSimulation);
+		FVector New_p = p + (TotalForce * GameState->SecondsInSimulation);
 		
 		// Calculate the new velocity
 		Velocity = New_p / PlanetMass;
 		
 		SetActorLocation(GetActorLocation() + (Velocity * GameState->SecondsInSimulation));
 		
+		AdjustOrientationTowardsTarget();
+		
 		// Remember the newly calculated momentum
 		p = New_p;
 		
 		// Optional: Update rotation based on new position if necessary
-		FRotator NewRotation = GetActorRotation();
-//		float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
-//		NewRotation.Yaw += DeltaRotation;
-//		SetActorRotation(NewRotation);
+//		FRotator NewRotation = GetActorRotation();
 		
 		// Debugging: Draw a line from the old position to the new position
 		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), RocketColor, false, 1);
@@ -177,7 +200,6 @@ void ARocket::DestroyRocket()
 
 void ARocket::FireThruster()
 {
-	
 	APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState());
 	
 	if(GameState){
@@ -191,4 +213,20 @@ void ARocket::FireThruster()
 void ARocket::ToggleThruster()
 {
 	bIsThrusterActive = !bIsThrusterActive;
+}
+
+void ARocket::AdjustOrientationTowardsTarget()
+{
+	if (!Target)
+		return;
+	
+	FVector TargetLocation = Target->GetActorLocation();
+	FVector CurrentLocation = GetActorLocation();
+	FVector DirectionToTarget = (TargetLocation - CurrentLocation).GetSafeNormal();
+	
+	// Create a rotation that aims the 'Z' vector of the rocket towards the target
+	FRotator DesiredRotation = FRotationMatrix::MakeFromZ(DirectionToTarget).Rotator();
+	
+	// Smoothly interpolate the rocket's current rotation towards the desired rotation
+	SetActorRotation(FMath::Lerp(GetActorRotation(), DesiredRotation, 0.1f)); // Tune the lerp factor (0.1f here) based on desired responsiveness
 }

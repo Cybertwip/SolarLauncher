@@ -87,6 +87,10 @@ void APracaInzGameState::BeginPlay()
 		AstralForces.Add(planet, FVector(0, 0, 0));
 		
 		Objects.Add(planet);
+		
+		if(planet->Name == "Mars"){
+			Rocket->Target = planet;
+		}
 	}
 	
 	Objects.Add(Rocket);
@@ -123,6 +127,7 @@ void APracaInzGameState::Tick(float DeltaTime)
 		
 		AstralForces[astralObject] = TotalForce;
 	}, false);
+
 	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
 		AAstralObject* astralObject = Objects[index];
 		
@@ -139,8 +144,6 @@ void APracaInzGameState::Tick(float DeltaTime)
 	{
 		return;
 	}
-	
-//	const double G = 6.67430e-11 * 1.766;
 
 	auto starLocation = star->GetActorLocation();
 	auto planetLocation = earth->GetActorLocation();
@@ -203,6 +206,10 @@ void APracaInzGameState::SelectPreviousPlanet()
 void APracaInzGameState::SelectRocket()
 {
 	Rocket->OnSelected(nullptr, FKey("Q"));
+}
+
+void APracaInzGameState::LaunchRocket(){
+	Rocket->Launch();
 }
 
 void APracaInzGameState::FetchPlanetData()

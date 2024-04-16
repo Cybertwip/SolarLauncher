@@ -81,6 +81,8 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		PlayerInputComponent->BindAction("LTrigger", IE_Pressed, PracaInzGameState, &APracaInzGameState::SelectPreviousPlanet);
 
 		PlayerInputComponent->BindAction("Rocket", IE_Pressed, PracaInzGameState, &APracaInzGameState::SelectRocket);
+
+		PlayerInputComponent->BindAction("Launch", IE_Pressed, PracaInzGameState, &APracaInzGameState::LaunchRocket);
 	}
 	
 }

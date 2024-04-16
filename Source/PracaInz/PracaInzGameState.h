@@ -40,6 +40,8 @@ public:
 	void SelectNextPlanet();
 	void SelectPreviousPlanet();
 	void SelectRocket();
+	
+	void LaunchRocket();
 
 	TArray<APlanet*> Planets;
 	TArray<AAstralObject*> Objects;

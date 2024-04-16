@@ -59,7 +59,12 @@ public:
 	FColor OrbitColor;
 	UPROPERTY(EditAnywhere, Category = "Components")
 	float Inclination;
+	
+	AAstralObject* Target;
 
+	void Launch();
+	
+	void AdjustOrientationTowardsTarget();
 
 private:
 	// State
