@@ -415,9 +415,9 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
-		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 		NewPlanet->InitialVelocity = FVector(0, 13, 0);
 		NewPlanet->InitialSetup();
+		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 		NewPlanet->OrbitColor = FColor(0, 255, 0, 255); // Setting a default color, adjust as needed
 	}
 }

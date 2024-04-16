@@ -70,6 +70,8 @@ void APlanet::BeginPlay()
 //	PlanetMesh->OnComponentEndOverlap.AddDynamic(this, &APlanet::OnOverlapEnd);
 	PlanetMesh->OnComponentHit.AddUniqueDynamic(this, &APlanet::OnHit);
 
+	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
+
 	InitialSetup();
 
 	if (APracaInzGameModeBase* PracaInzGameModeBase = Cast<APracaInzGameModeBase>(GetWorld()->GetAuthGameMode()))
@@ -79,7 +81,6 @@ void APlanet::BeginPlay()
 }
 
 void APlanet::InitialSetup(){
-	PlanetMesh->SetWorldScale3D(FVector(Diameter, Diameter, Diameter));
 
 	if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 	{
