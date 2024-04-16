@@ -252,8 +252,8 @@ void ARocket::AdjustThrustAsNearingTarget()
 	float Distance = FVector::Dist(GetActorLocation(), TargetLocation);
 	
 	// Reduce thrust as the rocket approaches the target to smooth out the approach
-	if (Distance < 3000.0f)  // Arbitrary distance threshold
+	if (Distance < 5000.0f)  // Arbitrary distance threshold
 	{
-		ThrustForce *= 0.5f;  // Reduce thrust by 10% as an example
+		ThrustForce *= 0.2f;  // Reduce thrust by 10% as an example
 	}
 }
