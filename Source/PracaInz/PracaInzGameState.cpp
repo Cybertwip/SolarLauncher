@@ -122,6 +122,7 @@ void APracaInzGameState::Tick(float DeltaTime)
 			FVector F = G * (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
 			
 			TotalForce += F;
+			
 			// Symmetry: Add force to the other object
 			AstralForces[otherObject] -= F;
 		}
