@@ -7,8 +7,6 @@
 
 #include "Kismet/GameplayStatics.h"
 
-#include <cmath> // for pow function
-
 namespace {
 FVector CalculateInitialPositionParsecs(double Distance)
 {
@@ -100,13 +98,15 @@ void APracaInzGameState::BeginPlay()
 	}
 }
 
-
 void APracaInzGameState::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	const double c = 3e8; // Speed of light in meters per second
+	const double c = 3e8 * BaseDistance; // Speed of light in meters per second
 	double G_modified;
+
+	// Update the total elapsed time since the start of the simulation
+	TimeSinceStart += DeltaTime;
 	
 	// Reset forces for all objects
 	for (AAstralObject* obj : Objects) {
@@ -126,11 +126,11 @@ void APracaInzGameState::Tick(float DeltaTime)
 			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
 			
 			// Calculate the modified gravitational constant
-			G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
+			double G_modified = G * (1 + relativeSpeedSquared / pow(c, 2));
 			
 			FVector forceDirection = r.GetSafeNormal();
 			FVector F = (G_modified * astralObject->PlanetMass * otherObject->PlanetMass / distanceSquared) * forceDirection;
-			
+
 			// Apply the gravitational force symmetrically
 			AstralForces[astralObject] += F * DeltaTime;
 			AstralForces[otherObject] -= F * DeltaTime;
@@ -143,7 +143,6 @@ void APracaInzGameState::Tick(float DeltaTime)
 		astralObject->Tick(DeltaTime);
 	}
 }
-
 
 
 void APracaInzGameState::SelectNextPlanet()
