@@ -274,6 +274,9 @@ void ARocket::AdjustThrustAsNearingTarget()
 		
 		// Interpolate the thrust force between its current value and the minimum value
 		ThrustForce = ThrustForce * LerpFactor * 0.5f;
-
+	}
+	
+	if(Distance <= MinReduceDistance){
+		bIsThrusterActive = false;
 	}
 }
