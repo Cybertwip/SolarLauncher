@@ -11,5 +11,6 @@ public class PracaInzTarget : TargetRules
 
 		bOverrideBuildEnvironment = true;
 		ExtraModuleNames.AddRange( new string[] { "PracaInz" } );
+		CppStandard = CppStandardVersion.Cpp20;
 	}
 }
