@@ -139,34 +139,38 @@ void APlanet::Tick(float DeltaTime)
 		float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
-		
-		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		// Inside APlanet::Tick()
+		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			// Calculate orbital period using position and velocity
+			// Calculate orbital direction (prograde/retrograde)
+			const FVector positionDir = currentPosition.GetSafeNormal();
+			const FVector velocityDir = Velocity.GetSafeNormal();
+			const double directionDot = FVector::DotProduct(positionDir, velocityDir);
+			const int32 directionSign = (directionDot > 0) ? 1 : -1; // 1=prograde, -1=retrograde
+			
+			// Use Keplerian formula for period (requires Mu = G*M from GameState)
 			const double orbitRadius = currentPosition.Size();
-			const double orbitalSpeed = Velocity.Size(); // In game units/sec
+			const double orbitalSpeed = Velocity.Size();
 			
-			constexpr double SECONDS_PER_DAY = 86400.0;
+			const double DAY_IN_SECONDS = 86400.0;
 			
-			// Check for valid speed and simulation time
-			if (orbitalSpeed > SMALL_NUMBER && PracaInzGameState->SecondsInSimulation && PracaInzGameState->UnitConversion)
+			if (orbitalSpeed > SMALL_NUMBER && GameState->Mu > SMALL_NUMBER)
 			{
-				// Calculate period in days
-				const double circumference = TWO_PI * orbitRadius;
-				const double periodSeconds = circumference / orbitalSpeed;
+				// Mu is already in correct units (cm³/s²) for our scaled simulation
+				const double specificEnergy = (FMath::Square(orbitalSpeed) / 2.0) - (GameState->Mu / orbitRadius);
+				const double semiMajorAxis = -GameState->Mu / (2.0 * specificEnergy);
 				
-				// Since SecondsInSimulation represents one day, we can directly convert to days
-				OrbitalPeriodDays = FMath::RoundToInt(periodSeconds / SECONDS_PER_DAY / 1000.0);
+				// Calculate period in PHYSICS SECONDS (unscaled by simulation speed)
+				const double periodPhysicsSeconds = directionSign * TWO_PI * FMath::Sqrt(FMath::Cube(semiMajorAxis) / GameState->Mu);
+				
+				// Convert physics seconds to simulation days taking into account time scaling
+				const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / DAY_IN_SECONDS;
+				OrbitalPeriodDays = FMath::RoundToInt(periodPhysicsSeconds / (DAY_IN_SECONDS * simulationTimeScale));
 			}
 			else
 			{
 				OrbitalPeriodDays = 0;
 			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to get PracaInzGameState"));
-			OrbitalPeriodDays = 0;
 		}
 		
 		const int32 MaxPeriod = 365 * 10; // 10 Earth years

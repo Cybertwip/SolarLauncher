@@ -53,6 +53,20 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Simulation")
 	double BaseDistance = 1000.0 / 149600000.0; // Correct scaling: 1 km = 6.68e-6 game units (1 AU = 1000 units)
 
+	// Scale factor calculation
+	const double actualDistance = 14.959787070e12; // cm
+	const double simulationDistance = 1000.0; // cm
+	const double scaleFactor = simulationDistance / actualDistance;
+	
+	// Actual Sun's Mu = 1.32712440018e26 cm³/s²
+	// Scaled Mu = actual Mu * (scaleFactor)³
+	const double scaledMu = 1.32712440018e26 * FMath::Pow(scaleFactor, 3);
+	
+	// This is what you should use in your GameState:
+	UPROPERTY(BlueprintReadOnly, Category = "Orbital")
+	double Mu = 1.32712440018e26 * FMath::Pow(1000.0 / 14.959787070e12, 3); // Scaled for simulation
+	
+	
 	int64 SecondsInSimulation = 86400;
 	double CurrentDeltaTime = 1.0/60.0; // Instead of 1/60
 
