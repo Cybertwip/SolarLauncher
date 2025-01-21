@@ -10,13 +10,18 @@
 #include <string>
 
 namespace {
-// Constants for conversion
-constexpr double SimAU_InCentimeters = 1000.0; // 1 AU = 1000 cm in simulation
-constexpr double RealAU_InMeters = 1.496e11;   // 1 AU in meters
-constexpr double SecondsInYear = 365.25 * 86400.0;
+// Real-world constants
+constexpr double RealAU_InMeters = 1.496e11;   // 1 AU = 1.496e11 meters
+constexpr double RealYear_InSeconds = 365.25 * 86400.0; // 31557600 seconds
+constexpr double G_Real = 6.67430e-11; // Real gravitational constant in m³/(kg·s²)
 
-// Calculate the scaling factor for velocity
-const double velocityScaleFactor = (RealAU_InMeters / SimAU_InCentimeters) / SecondsInYear;
+// Mass values in kg
+constexpr double EarthMass_kg = 5.972e24;
+constexpr double SunMass_kg = 1.989e30;
+
+// Game unit conversion constants
+constexpr double GameUnitsPerAU = 1000.0; // Assuming 1000 game units = 1 AU
+constexpr double ConversionRatio = RealAU_InMeters / GameUnitsPerAU;
 }
 
 
@@ -93,21 +98,49 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		{
 			VelocityTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		// In your UI code (e.g., HUD widget):
+		
 		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			// Convert simulation velocity to real-world velocity
-			const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / 86400.0;
+			// Get Sun's position
+			const FVector SunPosition = FVector(1770.0f, -14390.0f, 0.0f);
+			
+			// Calculate distance and velocity
+			const FVector RelativePosition = Planet->GetActorLocation() - SunPosition;
+			const double DistanceInGameUnits = RelativePosition.Size();
+			const double DistanceInMeters = DistanceInGameUnits * ConversionRatio;
+			
+			// Calculate orbital period using Kepler's Third Law
+			const double Mu = G_Real * (Planet->PlanetMass * EarthMass_kg + SunMass_kg);
+			const double periodPhysicsSeconds = 2.0 * PI * FMath::Sqrt(
+																	   FMath::Cube(DistanceInMeters) / Mu
+																	   );
+			
+			// Calculate orbital velocity using vis-viva equation
+			const double OrbitalVelocity = FMath::Sqrt(Mu * (2.0 / DistanceInMeters - 1.0 / DistanceInMeters));
+			
+			
+			// Update velocity display
 			if (simulationTimeScale > 0)
 			{
-				const double velocityKmH = Planet->Velocity.Size() // cm/s in simulation
-				* velocityScaleFactor  // Scale to real-world units
-				* 0.01                 // cm/s → m/s
-				* 3.6;                 // m/s → km/h
+				// Convert orbital velocity to km/h
+				const double velocityKmH = OrbitalVelocity * 3.6; // m/s to km/h
 				
-				VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
+				if (VelocityTextBox)
+				{
+					VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
+				}
 			}
 			else
+			{
+				if (VelocityTextBox)
+				{
+					VelocityTextBox->SetText(FText::FromString(TEXT("0.00 km/h")));
+				}
+			}
+		}
+		else
+		{
+			if (VelocityTextBox)
 			{
 				VelocityTextBox->SetText(FText::FromString(TEXT("0.00 km/h")));
 			}
@@ -192,25 +225,51 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 		{
 			VelocityTextBox->SetVisibility(ESlateVisibility::Visible);
 		}
-		// In your UI code (e.g., HUD widget):
 		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			// Convert simulation velocity to real-world velocity
-			const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / 86400.0;
+			// Get Sun's position
+			const FVector SunPosition = FVector(1770.0f, -14390.0f, 0.0f);
+			
+			// Calculate distance and velocity
+			const FVector RelativePosition = Rocket->GetActorLocation() - SunPosition;
+			const double DistanceInGameUnits = RelativePosition.Size();
+			const double DistanceInMeters = DistanceInGameUnits * ConversionRatio;
+			
+			// Calculate orbital period using Kepler's Third Law
+			const double Mu = G_Real * (Rocket->PlanetMass * EarthMass_kg + SunMass_kg);
+			const double periodPhysicsSeconds = 2.0 * PI * FMath::Sqrt(
+																	   FMath::Cube(DistanceInMeters) / Mu
+																	   );
+			
+			// Calculate orbital velocity using vis-viva equation
+			const double OrbitalVelocity = FMath::Sqrt(Mu * (2.0 / DistanceInMeters - 1.0 / DistanceInMeters));
+			
+			
+			// Update velocity display
 			if (simulationTimeScale > 0)
 			{
-				const double velocityKmH = Rocket->Velocity.Size() // cm/s in simulation
-				* velocityScaleFactor  // Scale to real-world units
-				* 0.01                 // cm/s → m/s
-				* 3.6;                 // m/s → km/h
+				// Convert orbital velocity to km/h
+				const double velocityKmH = OrbitalVelocity * 3.6; // m/s to km/h
 				
-				VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
+				if (VelocityTextBox)
+				{
+					VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
+				}
 			}
 			else
 			{
+				if (VelocityTextBox)
+				{
+					VelocityTextBox->SetText(FText::FromString(TEXT("0.00 km/h")));
+				}
+			}
+		}
+		else
+		{
+			if (VelocityTextBox)
+			{
 				VelocityTextBox->SetText(FText::FromString(TEXT("0.00 km/h")));
 			}
-			
 		}
 
 	}

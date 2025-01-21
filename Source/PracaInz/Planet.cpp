@@ -142,57 +142,39 @@ void APlanet::Tick(float DeltaTime)
 		
 		// Real-world constants
 		constexpr double RealAU_InMeters = 1.496e11;   // 1 AU = 1.496e11 meters
-		constexpr double RealYear_InSeconds = 365.25 * 86400.0; // More precise year length
+		constexpr double RealYear_InSeconds = 365.25 * 86400.0; // 31557600 seconds
+		constexpr double G_Real = 6.67430e-11; // Real gravitational constant in m³/(kg·s²)
 		
-		// Simulation constants
-		constexpr double SimAU_InCentimeters = 1000.0; // 1 AU = 1000 cm in simulation
-		constexpr double SimAU_InMeters = SimAU_InCentimeters * 0.01; // Convert to meters
-		
-		// Mass ratios (Earth = 1)
-		constexpr double SunMassUnits = 333000.0;  // Sun mass in Earth masses
-		
-		// Calculate custom G for the simulation scale
-		// This G is derived to make 1 AU orbit take exactly one year
-		constexpr double G_Sim = (4.0 * PI * PI * FMath::Cube(SimAU_InMeters)) /
-		(FMath::Square(RealYear_InSeconds) * (1.0 + SunMassUnits));
+		// Mass values in kg
+		constexpr double EarthMass_kg = 5.972e24;
+		constexpr double SunMass_kg = 1.989e30;
 		
 		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			double periodPhysicsSeconds = 0.0;
-			
 			// Get Sun's position
 			const FVector SunPosition = FVector(1770.0f, -14390.0f, 0.0f);
 			
-			// Calculate distance in simulation units (cm)
-			const double DistanceInSimCm = (GetActorLocation() - SunPosition).Size();
+			// Calculate distance in game units and convert to real meters
+			const double DistanceInGameUnits = (GetActorLocation() - SunPosition).Size();
+			const double ConversionRatio = RealAU_InMeters / 1000.0; // Assuming 1000 game units = 1 AU
+			const double DistanceInMeters = DistanceInGameUnits * ConversionRatio;
 			
-			// Convert to meters for calculation
-			const double DistanceInMeters = DistanceInSimCm * 0.01;
+			// Calculate orbital period using real Kepler's Third Law
+			// T² = (4π²/GM)r³, where G is real gravitational constant
+			const double Mu = G_Real * SunMass_kg; // Simplified since Sun's mass dominates
+			const double RealOrbitalPeriodInSeconds = 2.0 * PI * FMath::Sqrt(
+																			 FMath::Cube(DistanceInMeters) / Mu
+																			 );
 			
-			// Calculate orbital period using Kepler's Third Law
-			// Using PlanetMass (in Earth masses) for any planet
-			const double Mu = G_Sim * (PlanetMass + SunMassUnits);
-			periodPhysicsSeconds = 2.0 * PI * FMath::Sqrt(
-														  FMath::Cube(DistanceInMeters) / Mu
-														  );
+			// Scale the orbital period based on the simulation time scale
+			const double ScaledOrbitalPeriodInSeconds = RealOrbitalPeriodInSeconds / (GameState->SecondsInSimulation / 86400.0);
 			
-			// Convert to days
-			const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / 86400.0;
-			if (simulationTimeScale > 0)  // Prevent division by zero
-			{
-				// Calculate current position in orbit (0 to 365)
-				const double currentPosition = fmod(periodPhysicsSeconds / (simulationTimeScale * 86400.0), 365.25);
-				OrbitalPeriodDays = FMath::RoundToInt(currentPosition);
-			}
-			else
-			{
-				OrbitalPeriodDays = 0;
-			}
-			
+			// Store the orbital period in days
+			OrbitalPeriodDays = FMath::RoundToInt(ScaledOrbitalPeriodInSeconds / 86400.0);
 		}
 		else
 		{
-			OrbitalPeriodDays = 0.0;
+			OrbitalPeriodDays = 0;
 		}
 
 		const int32 MaxPeriod = 365 * 10; // 10 Earth years
