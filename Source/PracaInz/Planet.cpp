@@ -139,39 +139,40 @@ void APlanet::Tick(float DeltaTime)
 		float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
-		// Inside APlanet::Tick()
-		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+
+		
+		const double DAY_IN_SECONDS = 86400.0;
+
+		// Calculate orbital period using current forces and motion
+		const double currentSpeed = Velocity.Size();
+		const double netForceMagnitude = PrecomputedForce.Size();
+		
+		double periodPhysicsSeconds = 0.0f;
+		
+		
+		if (!FMath::IsNearlyZero(netForceMagnitude) &&
+			!FMath::IsNearlyZero(currentSpeed) &&
+			PlanetMass > SMALL_NUMBER)
 		{
-			// Calculate orbital direction (prograde/retrograde)
-			const FVector positionDir = currentPosition.GetSafeNormal();
-			const FVector velocityDir = Velocity.GetSafeNormal();
-			const double directionDot = FVector::DotProduct(positionDir, velocityDir);
-			const int32 directionSign = (directionDot > 0) ? 1 : -1; // 1=prograde, -1=retrograde
+			// Calculate instantaneous orbital period using:
+			// T = 2π * (velocity / (force/mass)) = 2π * mass * velocity / force
+			const double instantaneousPeriod =
+			2.0 * PI * currentSpeed * PlanetMass / netForceMagnitude;
 			
-			// Use Keplerian formula for period (requires Mu = G*M from GameState)
-			const double orbitRadius = currentPosition.Size();
-			const double orbitalSpeed = Velocity.Size();
-			
-			const double DAY_IN_SECONDS = 86400.0;
-			
-			if (orbitalSpeed > SMALL_NUMBER && GameState->Mu > SMALL_NUMBER)
-			{
-				// Mu is already in correct units (cm³/s²) for our scaled simulation
-				const double specificEnergy = (FMath::Square(orbitalSpeed) / 2.0) - (GameState->Mu / orbitRadius);
-				const double semiMajorAxis = -GameState->Mu / (2.0 * specificEnergy);
-				
-				// Calculate period in PHYSICS SECONDS (unscaled by simulation speed)
-				const double periodPhysicsSeconds = directionSign * TWO_PI * FMath::Sqrt(FMath::Cube(semiMajorAxis) / GameState->Mu);
-				
-				// Convert physics seconds to simulation days taking into account time scaling
-				const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / DAY_IN_SECONDS;
-				OrbitalPeriodDays = FMath::RoundToInt(periodPhysicsSeconds / (DAY_IN_SECONDS * simulationTimeScale));
-			}
-			else
-			{
-				OrbitalPeriodDays = 0;
-			}
+			// Low-pass filter for stability
+			periodPhysicsSeconds = FMath::Lerp(
+											   periodPhysicsSeconds,
+											   instantaneousPeriod,
+											   FMath::Clamp(DeltaTime * 0.5, 0.0, 1.0) // 2-second smoothing
+											   );
+		} else {
+			periodPhysicsSeconds = 0.0;
 		}
+		
+		// Convert to simulation days
+		const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / DAY_IN_SECONDS;
+		OrbitalPeriodDays = FMath::RoundToInt(periodPhysicsSeconds * simulationTimeScale);
+
 		
 		const int32 MaxPeriod = 365 * 10; // 10 Earth years
 		float t = FMath::Clamp(static_cast<float>(OrbitalPeriodDays) / MaxPeriod, 0.0f, 1.0f);
@@ -180,9 +181,10 @@ void APlanet::Tick(float DeltaTime)
 		FLinearColor Color = FLinearColor::FGetHSV(240.0f * (1.0f - t), 1.0f, 1.0f);
 		OrbitColor = Color.ToFColor(true);
 
-		
-		// Debugging: Draw a line from the old position to the new position
-		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), OrbitColor, false, 1);
+		// For better orbital line stability
+		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(),
+					  OrbitColor, false, -1, 0, 2.0f);
+
 	}
 }
 

@@ -84,8 +84,23 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 		}
 		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			VelocityTextBox->SetText(FText::FromString((FString::SanitizeFloat(Planet->Velocity.Size() 
-				 /PracaInzGameState->CurrentDeltaTime  /PracaInzGameState->BaseDistance))));
+			// Get velocity in simulation units per second
+			double velocityInSimUnits = Planet->Velocity.Size();
+			
+			// Scale factor for distance (same as used for Mu)
+			const double distanceScale = 1000.0 / 1.496e13; // simulation distance / real distance
+			
+			// Account for time scaling
+			// SecondsInSimulation = 86400 means 1 real day passes in 1 simulation second
+			const double timeScale = 86400.0 / PracaInzGameState->SecondsInSimulation;
+			
+			// Convert to real velocity in km/h:
+			// 1. Scale velocity back to real space (divide by distanceScale)
+			// 2. Account for time scaling
+			// 3. Convert from cm/s to km/h
+			double velocityKmH = (velocityInSimUnits / distanceScale) * timeScale * (3600.0 / 100000.0);
+			
+			VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
 		}
 	}
 	if (SecondsSlider)
@@ -169,10 +184,26 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 		}
 		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			VelocityTextBox->SetText(FText::FromString((FString::SanitizeFloat(Rocket->Velocity.Size()
-																			   /PracaInzGameState->CurrentDeltaTime  /PracaInzGameState->BaseDistance))));
+			// Get velocity in simulation units per second
+			double velocityInSimUnits = Rocket->Velocity.Size();
+			
+			// Scale factor for distance (same as used for Mu)
+			const double distanceScale = 1000.0 / 1.496e13; // simulation distance / real distance
+			
+			// Account for time scaling
+			// SecondsInSimulation = 86400 means 1 real day passes in 1 simulation second
+			const double timeScale = 86400.0 / PracaInzGameState->SecondsInSimulation;
+			
+			// Convert to real velocity in km/h:
+			// 1. Scale velocity back to real space (divide by distanceScale)
+			// 2. Account for time scaling
+			// 3. Convert from cm/s to km/h
+			double velocityKmH = (velocityInSimUnits / distanceScale) * timeScale * (3600.0 / 100000.0);
+			
+			VelocityTextBox->SetText(FText::FromString(FString::Printf(TEXT("%.2f km/h"), velocityKmH)));
 		}
 	}
+	
 	if (SecondsSlider)
 	{
 		if (SecondsSlider->Visibility == ESlateVisibility::Hidden)
