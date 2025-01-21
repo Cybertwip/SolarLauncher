@@ -52,9 +52,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Simulation")
 	double BaseDistance = 1000.0 / 149600000.0; // Correct scaling: 1 km = 6.68e-6 game units (1 AU = 1000 units)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Orbital")
-	double Mu = 3.986004418e14 * FMath::Pow(1000.0 / 1.496e13, 3); // Scaled Earth's Mu for simulation
 	
 	int64 SecondsInSimulation = 86400;
 	double CurrentDeltaTime = 1.0/60.0; // Instead of 1/60

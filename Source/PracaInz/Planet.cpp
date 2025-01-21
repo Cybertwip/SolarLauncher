@@ -12,7 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/WidgetComponent.h"
-#include "UObject/ConstructorHelpers.h" 
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values
 APlanet::APlanet()
@@ -139,41 +139,62 @@ void APlanet::Tick(float DeltaTime)
 		float DeltaRotation = DeltaTime * RotationSpeed * GameState->SecondsInSimulation;
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
-
 		
-		const double DAY_IN_SECONDS = 86400.0;
-
-		// Calculate orbital period using current forces and motion
-		const double currentSpeed = Velocity.Size();
-		const double netForceMagnitude = PrecomputedForce.Size();
+		// Real-world constants
+		constexpr double RealAU_InMeters = 1.496e11;   // 1 AU = 1.496e11 meters
+		constexpr double RealYear_InSeconds = 365.25 * 86400.0; // More precise year length
 		
-		double periodPhysicsSeconds = 0.0f;
+		// Simulation constants
+		constexpr double SimAU_InCentimeters = 1000.0; // 1 AU = 1000 cm in simulation
+		constexpr double SimAU_InMeters = SimAU_InCentimeters * 0.01; // Convert to meters
 		
+		// Mass ratios (Earth = 1)
+		constexpr double SunMassUnits = 333000.0;  // Sun mass in Earth masses
 		
-		if (!FMath::IsNearlyZero(netForceMagnitude) &&
-			!FMath::IsNearlyZero(currentSpeed) &&
-			PlanetMass > SMALL_NUMBER)
+		// Calculate custom G for the simulation scale
+		// This G is derived to make 1 AU orbit take exactly one year
+		constexpr double G_Sim = (4.0 * PI * PI * FMath::Cube(SimAU_InMeters)) /
+		(FMath::Square(RealYear_InSeconds) * (1.0 + SunMassUnits));
+		
+		if (APracaInzGameState* GameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
 		{
-			// Calculate instantaneous orbital period using:
-			// T = 2π * (velocity / (force/mass)) = 2π * mass * velocity / force
-			const double instantaneousPeriod =
-			2.0 * PI * currentSpeed * PlanetMass / netForceMagnitude;
+			double periodPhysicsSeconds = 0.0;
 			
-			// Low-pass filter for stability
-			periodPhysicsSeconds = FMath::Lerp(
-											   periodPhysicsSeconds,
-											   instantaneousPeriod,
-											   FMath::Clamp(DeltaTime * 0.5, 0.0, 1.0) // 2-second smoothing
-											   );
-		} else {
-			periodPhysicsSeconds = 0.0;
+			// Get Sun's position
+			const FVector SunPosition = FVector(1770.0f, -14390.0f, 0.0f);
+			
+			// Calculate distance in simulation units (cm)
+			const double DistanceInSimCm = (GetActorLocation() - SunPosition).Size();
+			
+			// Convert to meters for calculation
+			const double DistanceInMeters = DistanceInSimCm * 0.01;
+			
+			// Calculate orbital period using Kepler's Third Law
+			// Using PlanetMass (in Earth masses) for any planet
+			const double Mu = G_Sim * (PlanetMass + SunMassUnits);
+			periodPhysicsSeconds = 2.0 * PI * FMath::Sqrt(
+														  FMath::Cube(DistanceInMeters) / Mu
+														  );
+			
+			// Convert to days
+			const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / 86400.0;
+			if (simulationTimeScale > 0)  // Prevent division by zero
+			{
+				// Calculate current position in orbit (0 to 365)
+				const double currentPosition = fmod(periodPhysicsSeconds / (simulationTimeScale * 86400.0), 365.25);
+				OrbitalPeriodDays = FMath::RoundToInt(currentPosition);
+			}
+			else
+			{
+				OrbitalPeriodDays = 0;
+			}
+			
 		}
-		
-		// Convert to simulation days
-		const double simulationTimeScale = static_cast<double>(GameState->SecondsInSimulation) / DAY_IN_SECONDS;
-		OrbitalPeriodDays = FMath::RoundToInt(periodPhysicsSeconds * simulationTimeScale);
+		else
+		{
+			OrbitalPeriodDays = 0.0;
+		}
 
-		
 		const int32 MaxPeriod = 365 * 10; // 10 Earth years
 		float t = FMath::Clamp(static_cast<float>(OrbitalPeriodDays) / MaxPeriod, 0.0f, 1.0f);
 		
@@ -181,9 +202,7 @@ void APlanet::Tick(float DeltaTime)
 		FLinearColor Color = FLinearColor::FGetHSV(240.0f * (1.0f - t), 1.0f, 1.0f);
 		OrbitColor = Color.ToFColor(true);
 
-		// For better orbital line stability
-		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(),
-					  OrbitColor, false, -1, 0, 2.0f);
+		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), OrbitColor, false, 2);
 
 	}
 }
