@@ -156,7 +156,7 @@ void APlanet::Tick(float DeltaTime)
 				const double periodSeconds = circumference / orbitalSpeed;
 				
 				// Since SecondsInSimulation represents one day, we can directly convert to days
-				OrbitalPeriodDays = FMath::RoundToInt(periodSeconds / SECONDS_PER_DAY * PracaInzGameState->UnitConversion);
+				OrbitalPeriodDays = FMath::RoundToInt(periodSeconds / SECONDS_PER_DAY / 1000.0);
 			}
 			else
 			{
