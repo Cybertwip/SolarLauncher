@@ -140,6 +140,43 @@ void APlanet::Tick(float DeltaTime)
 		NewRotation.Yaw += DeltaRotation;
 		SetActorRotation(NewRotation);
 		
+		if (APracaInzGameState* PracaInzGameState = Cast<APracaInzGameState>(GetWorld()->GetGameState()))
+		{
+			// Calculate orbital period using position and velocity
+			const double orbitRadius = currentPosition.Size();
+			const double orbitalSpeed = Velocity.Size(); // In game units/sec
+			
+			constexpr double SECONDS_PER_DAY = 86400.0;
+			
+			// Check for valid speed and simulation time
+			if (orbitalSpeed > SMALL_NUMBER && PracaInzGameState->SecondsInSimulation && PracaInzGameState->UnitConversion)
+			{
+				// Calculate period in days
+				const double circumference = TWO_PI * orbitRadius;
+				const double periodSeconds = circumference / orbitalSpeed;
+				
+				// Since SecondsInSimulation represents one day, we can directly convert to days
+				OrbitalPeriodDays = FMath::RoundToInt(periodSeconds / SECONDS_PER_DAY * PracaInzGameState->UnitConversion);
+			}
+			else
+			{
+				OrbitalPeriodDays = 0;
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to get PracaInzGameState"));
+			OrbitalPeriodDays = 0;
+		}
+		
+		const int32 MaxPeriod = 365 * 10; // 10 Earth years
+		float t = FMath::Clamp(static_cast<float>(OrbitalPeriodDays) / MaxPeriod, 0.0f, 1.0f);
+		
+		// Hue from 240° (blue) to 0° (red)
+		FLinearColor Color = FLinearColor::FGetHSV(240.0f * (1.0f - t), 1.0f, 1.0f);
+		OrbitColor = Color.ToFColor(true);
+
+		
 		// Debugging: Draw a line from the old position to the new position
 		DrawDebugLine(GetWorld(), currentPosition, GetActorLocation(), OrbitColor, false, 1);
 	}
