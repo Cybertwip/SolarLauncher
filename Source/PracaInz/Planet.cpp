@@ -167,7 +167,8 @@ void APlanet::Tick(float DeltaTime)
 																			 );
 			
 			// Scale the orbital period based on the simulation time scale
-			const double ScaledOrbitalPeriodInSeconds = RealOrbitalPeriodInSeconds / (GameState->SecondsInSimulation / 86400.0);
+			const double TimeScale = FMath::Abs(static_cast<double>(GameState->SecondsInSimulation) / 86400.0);
+			const double ScaledOrbitalPeriodInSeconds = RealOrbitalPeriodInSeconds / TimeScale;
 			
 			// Store the orbital period in days
 			OrbitalPeriodDays = FMath::RoundToInt(ScaledOrbitalPeriodInSeconds / 86400.0);

@@ -119,8 +119,10 @@ void UPlanetInfoWidget::UpdatePlanetInfo(APlanet* Planet)
 			const double OrbitalVelocity = FMath::Sqrt(Mu * (2.0 / DistanceInMeters - 1.0 / DistanceInMeters));
 			
 			
+			const double simulationTimeScale = FMath::Abs(static_cast<double>(GameState->SecondsInSimulation) / 86400.0);
+
 			// Update velocity display
-			if (simulationTimeScale > 0)
+			if (simulationTimeScale != 0)
 			{
 				// Convert orbital velocity to km/h
 				const double velocityKmH = OrbitalVelocity * 3.6; // m/s to km/h
@@ -244,9 +246,11 @@ void UPlanetInfoWidget::UpdateRocketInfo(ARocket* Rocket)
 			// Calculate orbital velocity using vis-viva equation
 			const double OrbitalVelocity = FMath::Sqrt(Mu * (2.0 / DistanceInMeters - 1.0 / DistanceInMeters));
 			
+			const double simulationTimeScale = FMath::Abs(static_cast<double>(GameState->SecondsInSimulation) / 86400.0);
+
 			
 			// Update velocity display
-			if (simulationTimeScale > 0)
+			if (simulationTimeScale != 0)
 			{
 				// Convert orbital velocity to km/h
 				const double velocityKmH = OrbitalVelocity * 3.6; // m/s to km/h
