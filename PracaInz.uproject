@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.4",
+	"EngineAssociation": "5.5",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -14,12 +14,11 @@
 				"Slate",
 				"SlateCore",
 				"HTTP",
-			    "Json",
+				"Json",
 				"XmlParser"
 			]
 		}
 	],
-
 	"Plugins": [
 		{
 			"Name": "EnhancedInput",

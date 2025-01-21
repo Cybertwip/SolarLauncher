@@ -7,6 +7,12 @@
 
 #include "Kismet/GameplayStatics.h"
 
+// Casimir force constants
+constexpr double PLANCK_CONSTANT = 1.0545718e-34;   // ħ (J·s)
+constexpr double SPEED_OF_LIGHT = 3e8;              // c (m/s)
+constexpr double CASIMIR_COEFFICIENT = (M_PI * M_PI * PLANCK_CONSTANT * SPEED_OF_LIGHT) / 240.0;
+
+
 namespace {
 FVector CalculateInitialPositionParsecs(double Distance)
 {
@@ -31,17 +37,7 @@ APracaInzGameState::APracaInzGameState()
 }
 
 void APracaInzGameState::BeginPlay()
-{
-//	FName levelName = FName(*GetWorld()->GetName());
-//	if (levelName == FName("SolarSystem"))
-//	{
-////		BaseDistance = (1.0 / 1000.0) * 149597870700;
-//	}
-//	else
-//	{
-//		BaseDistance = 1 / (1E3);
-//	}
-	
+{	
 	FString FileName = FPaths::ProjectContentDir() + TEXT("Data/nea_extended.json");
 	FString JsonData;
 	if (FFileHelper::LoadFileToString(JsonData, *FileName))
@@ -67,20 +63,6 @@ void APracaInzGameState::BeginPlay()
 		return A.PlanetMass < B.PlanetMass; // Ascending order
 	});
 	
-	for (APlanet* planet : Planets)
-	{
-		if(planet->Name == "Sun"){
-			star = planet;
-		}
-		
-		if(planet->Name == "Earth"){
-			earth = planet;
-		}
-		
-		if(star && earth){
-			break;
-		}
-	}
 	
 	Objects.Add(Rocket);
 	
@@ -98,69 +80,100 @@ void APracaInzGameState::BeginPlay()
 	}
 }
 
-
+// PracaInzGameState.cpp
 void APracaInzGameState::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	// Update the total elapsed time since the start of the simulation
-	TimeSinceStart += DeltaTime;
+	const int32 NumObjects = Objects.Num();
+	if(NumObjects == 0) return;
 	
-	// Calculate gravitational forces between all pairs of planets using ParallelFor
-	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AAstralObject* astralObject = Objects[index];
-		FVector TotalForce = FVector(0, 0, 0);
+	// Quantum constants (SI units)
+	constexpr double HydrogenDensity = 1408.0; // kg/m³
+	
+	// Reset quantum force fields
+	for(auto& Pair : AstralForces) {
+		Pair.Value = FVector::ZeroVector;
+	}
+	
+	// Calculate quantum entanglement forces
+	ParallelFor(NumObjects, [&](int32 i) {
+		AAstralObject* Object1 = Objects[i];
+		const FVector Position1 = Object1->GetActorLocation();
+		const double Mass1 = Object1->PlanetMass;
 		
-		// Calculate gravitational forces between celestial objects
-		for (int32 j = index + 1; j < Objects.Num(); ++j) {
-			AAstralObject* otherObject = Objects[j];
-			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
-			double distanceSquared = r.SizeSquared();
+		// Compute radius using cube root approximation
+		const double Radius1 = FMath::Pow(
+										  3.0 * Mass1 / (4.0 * PI * HydrogenDensity + 1e-20),
+										  1.0/3.0
+										  );
+		
+		for(int32 j = i+1; j < NumObjects; j++) {
+			AAstralObject* Object2 = Objects[j];
+			const FVector Position2 = Object2->GetActorLocation();
+			const double Mass2 = Object2->PlanetMass;
 			
-			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
+			FVector Delta = Position2 - Position1;
+			double Distance = Delta.Size() * UnitConversion;
+			if(Distance < 1e-10) continue;
 			
-			FVector F = G * (astralObject->PlanetMass * otherObject->PlanetMass) / distanceSquared * r.GetSafeNormal();
+			FVector Direction = Delta.GetSafeNormal();
 			
-			TotalForce += F;
+			// 1. Neutrino-Antineutrino Attraction (Always active)
+			const double NuAttraction = (Mass1 * NeutrinoCoupling) *
+			(Mass2 * AntineutrinoCoupling);
+			const double F_attract = NuAttraction / FMath::Square(Distance);
 			
-			// Symmetry: Add force to the other object
-			AstralForces[otherObject] -= F;
+			// 2. Casimir Repulsion (Always active)
+			const double Radius2 = FMath::Pow(
+											  3.0 * Mass2 / (4.0 * PI * HydrogenDensity + 1e-20),
+											  1.0/3.0
+											  );
+			const double EffectiveArea = PI * Radius1 * Radius2;
+			const double F_repel = (CasimirCoefficient * EffectiveArea) /
+			FMath::Pow(Distance + 1e-5, 4); // +epsilon for stability
+			
+			// Net quantum force
+			const double TotalForce = (F_attract - F_repel);
+			
+			// Apply opposing quantum forces
+			AstralForces[Object1] += TotalForce * Direction;
+			AstralForces[Object2] -= TotalForce * Direction;
 		}
-		
-		// Calculate gravitational forces from Lagrange points dynamically
-		for (int32 j = index + 1; j < Objects.Num(); ++j) {
-			AAstralObject* otherObject = Objects[j];
-			FVector r = otherObject->GetActorLocation() - astralObject->GetActorLocation();
-			double distanceSquared = r.SizeSquared();
-			
-			if (distanceSquared < KINDA_SMALL_NUMBER) continue; // Skip to avoid division by zero
-			
-			// Calculate Lagrange point mass based on the other object's mass
-			float lagrangePointMass = otherObject->PlanetMass; // No scaling needed
-			
-			// Calculate gravitational force from Lagrange point
-			FVector F = G * (astralObject->PlanetMass * lagrangePointMass) / distanceSquared * r.GetSafeNormal();
-			
-			TotalForce += F;
-			
-			// Symmetry: Add force to the other object
-			AstralForces[otherObject] -= F;
+	}, NumObjects > 1000);
+	
+	// Update orbital dynamics
+	for (int32 i = 0; i < NumObjects; ++i) {
+		AAstralObject* astralObject = Objects[i];
+		if(AstralForces.Contains(astralObject)) {
+			astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
+			astralObject->Tick(DeltaTime);
 		}
-		
-		AstralForces[astralObject] = TotalForce;
-	}, false);
-	
-	// Update forces and simulate objects
-	ParallelFor(Objects.Num(), [this, DeltaTime](int32 index) {
-		AAstralObject* astralObject = Objects[index];
-		astralObject->UpdatePrecomputedForce(AstralForces[astralObject]);
-	}, false);
-	
-	for (AAstralObject* astralObject : Objects)
-	{
-		astralObject->Tick(DeltaTime);
 	}
 }
+
+void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double Mass, double RadiusKm, double Inclination, double DistanceAU)
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+	
+	// Convert AU to game units (1 AU = 1000 units)
+	FVector InitialPosition = FVector(DistanceAU * 1000.0, 0, 0);
+	
+	// Convert radius from km to game units
+	double RadiusGameUnits = RadiusKm * BaseDistance;
+	double DiameterGameUnits = RadiusGameUnits * 2.0;
+	
+	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
+	if (NewPlanet)
+	{
+		NewPlanet->PlanetMass = Mass * 1.9885e30; // Convert solar masses to kg
+		NewPlanet->Diameter = DiameterGameUnits;
+		NewPlanet->Name = Name;
+	}
+}
+
 
 void APracaInzGameState::SelectNextPlanet()
 {
@@ -318,7 +331,9 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 				continue; // Skip to the next system
 			}
 			
-			double Distance = FCString::Atof(*DistanceStr);
+			double DistanceParsecs = FCString::Atof(*DistanceStr);
+			double DistanceAU = DistanceParsecs * 206265.0; // Convert parsecs to AU
+
 			
 			for (const FXmlNode* StarNode : SystemNode->GetChildrenNodes())
 			{
@@ -356,9 +371,9 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 						continue; // Skip to the next star
 					}
 					
-					double StarRadius = FCString::Atof(*StarRadiusStr);
-
-					SpawnPlanetFromXmlData(StarName, StarMass, StarRadius, 0.0f, Distance);
+					double StarRadiusKm = FCString::Atof(*StarRadiusStr) * 695700.0; // Solar radii to km
+					
+					SpawnPlanetFromXmlData(StarName, StarMass, StarRadiusKm, 0.0f, DistanceAU);
 				}
 			}
 		}
@@ -370,32 +385,6 @@ void APracaInzGameState::ProcessXmlData(const FString& XmlData)
 }
 
 
-void APracaInzGameState::SpawnPlanetFromXmlData(const FString& Name, double PlanetMass, double Radius, double Inclination, double Distance)
-{
-	// Convert radius to diameter
-	double Diameter = Radius * 2.0f;
-	
-	// Configuration for the new planet actor
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = GetInstigator();
-	
-	// Calculate initial position and other dynamics as needed
-	FVector InitialPosition = CalculateInitialPositionParsecs(Distance); // Modify this method to use distance
-	
-	// Spawn the planet actor
-	APlanet* NewPlanet = GetWorld()->SpawnActor<APlanet>(APlanet::StaticClass(), InitialPosition, FRotator::ZeroRotator, SpawnParams);
-	if (NewPlanet)
-	{
-		NewPlanet->PlanetMass = PlanetMass * 332886.8125; // Sun PlanetMass
-		NewPlanet->Diameter = Diameter;
-		NewPlanet->Name = Name;
-		NewPlanet->Inclination = Inclination;
-		NewPlanet->SetActorScale3D(FVector(1));
-		NewPlanet->OrbitColor = FColor(255, 255, 0, 255); // Setting a default color, adjust as needed
-
-	}
-}
 
 void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 {
@@ -412,7 +401,7 @@ void APracaInzGameState::SpawnPlanetFromJsonData(const FPlanetData& PlanetData)
 		NewPlanet->PlanetMass = PlanetData.Mass;
 		NewPlanet->Diameter = Diameter;
 		NewPlanet->Name = PlanetData.Name;
-		NewPlanet->InitialVelocity = FVector(0, 13, 0);
+		NewPlanet->InitialVelocity = FVector::ZeroVector;
 		NewPlanet->InitialSetup();
 		NewPlanet->SetActorScale3D(FVector(0.1)); // Assuming a uniform scale
 		NewPlanet->OrbitColor = FColor(0, 255, 0, 255); // Setting a default color, adjust as needed
